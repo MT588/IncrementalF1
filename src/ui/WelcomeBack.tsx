@@ -1,0 +1,29 @@
+import { STRINGS } from '@/engine/data/strings';
+import { useGameStore } from '@/store/gameStore';
+import { formatMoney } from '@/util/formatNumber';
+
+export function WelcomeBack() {
+  const earnings = useGameStore((s) => s.offlineEarnings);
+  const dismiss = useGameStore((s) => s.dismissOfflineEarnings);
+  if (!earnings) return null;
+
+  return (
+    <div
+      role="status"
+      className="border-sector-green bg-panel mt-4 flex items-center justify-between gap-3 border-l-4 px-4 py-3 text-sm"
+    >
+      <p>
+        {STRINGS.WELCOME_BACK}{' '}
+        <span className="text-sector-green tabular-nums">{formatMoney(earnings)}</span>.
+      </p>
+      <button
+        type="button"
+        onClick={dismiss}
+        aria-label="Dismiss"
+        className="text-ink-muted hover:text-ink min-h-11 min-w-11 rounded-sm focus-visible:ring-2 focus-visible:ring-ink focus-visible:outline-none"
+      >
+        ×
+      </button>
+    </div>
+  );
+}
