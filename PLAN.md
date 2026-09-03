@@ -311,7 +311,8 @@ phase 1; phase 2 talks to Supabase directly from the browser.
 | Netlify             | Free | Same class                                                 |
 | GitHub Pages        | Free | Fine for MVP, no preview deploys, no headers control       |
 
-Setup:
+Setup (done in M2, after the MVP is playable — until then the game runs
+locally with `pnpm dev`):
 - Connect the GitHub repo to Cloudflare Pages; build command `pnpm build`,
   output `dist/`. Every push to `main` deploys; every PR gets a preview URL.
 - Custom domain optional (~€10/year). Cloudflare gives free TLS.
@@ -348,7 +349,8 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 
 ### M0 — Scaffold (1 evening)
 - Vite + React + TS + Tailwind + Vitest + ESLint/Prettier, pnpm.
-- Deploy empty page to Cloudflare Pages; CI running on PR.
+- GitHub Actions CI on PR (lint, typecheck, test, build). No deploy yet;
+  the game runs locally with `pnpm dev` until the MVP is playable.
 - `engine/` skeleton with `GameState`, `tick`, one generator, one test.
 
 ### M1 — Playable MVP (1–2 weeks)
@@ -358,18 +360,24 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 - Basic UI: resource header, generator list, upgrade list, settings.
 - break_infinity numbers + formatting.
 
-### M2 — Races, seasons, prestige (2–3 weeks)
+### M2 — First deploy (1 evening)
+- Connect the repo to Cloudflare Pages; production deploy from `main`,
+  preview URL per PR.
+- Cloudflare Web Analytics, favicon, share the link with a few testers.
+- From here on every merge to `main` ships automatically.
+
+### M3 — Races, seasons, prestige (2–3 weeks)
 - Race simulation vs AI field, reputation, sponsors.
 - Season of 20 races → prestige → Championship points shop.
 - Automation upgrades; achievements.
 - Balance pass using simulation tests. PWA.
 
-### M3 — Accounts and cloud saves (1–2 weeks)
+### M4 — Accounts and cloud saves (1–2 weeks)
 - Supabase project, `saves` table + RLS, auth (magic link, Google, anonymous).
 - Sync logic (playtime-based conflict resolution), multi-tab safety.
 - Account deletion.
 
-### M4 — Polish & community (ongoing)
+### M5 — Polish & community (ongoing)
 - Statistics screen, changelog, sound toggles, track animation (canvas).
 - Leaderboards via Edge Function validation.
 - Events / limited-time challenges.
@@ -381,7 +389,7 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 | Question                         | Default                        | Decide by |
 |----------------------------------|--------------------------------|-----------|
 | React vs Svelte                  | React                          | M0        |
-| Real-time races vs lap-count races | Lap-count (deterministic, works offline) | M2 |
-| Anonymous accounts on by default | Yes                            | M3        |
-| Leaderboards at all              | Only after M3, if players ask  | M4        |
+| Real-time races vs lap-count races | Lap-count (deterministic, works offline) | M3 |
+| Anonymous accounts on by default | Yes                            | M4        |
+| Leaderboards at all              | Only after M4, if players ask  | M5        |
 | Monetisation                     | None (hobby); maybe donations  | —         |
