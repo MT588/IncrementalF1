@@ -1,10 +1,11 @@
 # IncrementalF1 — Project Plan
 
-A browser-based incremental (idle) game themed around running a Formula 1 team.
-You start with a garage, a rusty car and one mechanic. Every lap you complete
-earns prize money. Money buys car parts, engineers, and facilities that make
-laps faster and worth more. At the end of a "season" you can reset for permanent
-bonuses (prestige) and climb the constructors' ladder.
+A browser-based incremental (idle) game about riding your way from a bicycle in
+the backyard to a Formula 1 team. You start on a bike, tapping out one metre at
+a time round a thirty-metre loop; **money only arrives when you complete a lap**.
+Money buys upgrades that pedal for you and make each lap pay more, then longer
+tracks, faster machines and eventually a real car. At the end of a "season" you
+can reset for permanent bonuses (prestige) and climb the constructors' ladder.
 
 This document is the full plan: game design, technology choices, architecture,
 save/state storage per user, hosting, and a milestone roadmap.
@@ -16,10 +17,16 @@ save/state storage per user, hosting, and a milestone roadmap.
 ### 1.1 Core loop
 
 ```
-lap completes  →  earns € (prize money)  →  buy upgrades  →  laps get faster / worth more
-       ↑                                                                    │
-       └────────────── occasionally: end season, prestige, restart stronger ┘
+tap (+1 m)  →  distance covers a lap  →  lap completes → earns €  →  buy upgrades
+    ↑                    ↑                                                  │
+    │        auto-pedal adds m/s on its own                                 │
+    └──────────────── upgrades: more m/s, more € per lap ───────────────────┘
+                 occasionally: end season, prestige, restart stronger
 ```
+
+The important rule: **a tap is distance, not money.** Taps move the bike; only
+crossing the finish line pays. Distance past the line carries into the next lap,
+so nothing a player does is ever wasted.
 
 ### 1.2 Resources
 
@@ -30,25 +37,28 @@ lap completes  →  earns € (prize money)  →  buy upgrades  →  laps get fa
 | Reputation       | ★      | Race results, podiums               | Sponsors (multipliers), driver hires |
 | Championship pts | CP     | Prestige (season reset)             | Permanent upgrades                   |
 
-### 1.3 Generators (things that produce laps / money)
+### 1.3 Tracks and upgrades
 
-Each generator has a base output, a base cost, and a cost growth factor.
-Standard incremental formula:
+A **track** is just a distance and a payout. The backyard loop is 30 m and pays
+€5; later tracks are longer and pay more. Adding one is a data row, not code.
+
+Every **upgrade** is repeatable — cost grows per level, the effect stacks:
 
 ```
-cost(n)   = baseCost × growth^n            growth ≈ 1.07–1.15
-output(n) = baseOutput × n × multipliers
+cost(n) = baseCost × growth^n              growth ≈ 1.07–1.6
+effect:   { kind: 'speed',  perLevel }     +m/s of automatic pedalling
+          { kind: 'payout', perLevel }     ×money per completed lap
 ```
 
-Tiers (early → late):
+Ladder (early → late):
 
-1. **Mechanic** – turns wrenches, small € per second.
-2. **Test driver** – runs laps continuously.
-3. **Engine upgrades** – multiplies lap speed.
-4. **Aero package** – multiplies € per lap.
-5. **Pit crew** – reduces "pit stop" downtime (idle penalty).
-6. **Wind tunnel** – produces RP.
-7. **Simulator** – produces RP and small lap bonus.
+1. **Auto-pedal** – the bike keeps rolling on its own, slowly. _(M1)_
+2. **Racing tyres** – every finished lap pays more. _(M1)_
+3. **Bigger gears** – more metres per tap.
+4. **Longer tracks** – the park, the local circuit, a real track.
+5. **A moped, then a car** – large jumps in m/s and payout.
+6. **Mechanic / test driver** – staff who ride laps for you.
+7. **Wind tunnel, simulator** – produce RP.
 8. **Second car** – doubles everything, very expensive.
 9. **Factory** – global multiplier, late game.
 
@@ -58,21 +68,22 @@ Tiers (early → late):
   counter hits a target). Your lap speed vs. AI field determines finishing
   position → payout + reputation.
 - A **season** is 20 races. Finishing a season lets you **prestige**: reset
-  money, generators, and RP, but keep Championship points which buy permanent
+  money, upgrades, and RP, but keep Championship points which buy permanent
   boosts (starting cash, +% output, unlock automation).
 - Prestige is the retention hook. First prestige should be reachable in
   ~30–60 minutes of active play.
 
 ### 1.5 Progression pacing (targets)
 
-| Milestone                        | Target time   |
-| -------------------------------- | ------------- |
-| First upgrade                    | < 30 seconds  |
-| All tier-1..3 generators visible | ~5 minutes    |
-| First race                       | ~5 minutes    |
-| First prestige                   | 30–60 minutes |
-| Automation unlocked (auto-buy)   | 2nd prestige  |
-| "Endgame" content                | 20+ hours     |
+| Milestone                      | Target time   |
+| ------------------------------ | ------------- |
+| First lap (30 taps)            | < 15 seconds  |
+| First upgrade (auto-pedal)     | < 30 seconds  |
+| Second track unlocked          | ~5 minutes    |
+| First race                     | ~5 minutes    |
+| First prestige                 | 30–60 minutes |
+| Automation unlocked (auto-buy) | 2nd prestige  |
+| "Endgame" content              | 20+ hours     |
 
 ### 1.6 Offline progress
 
@@ -81,8 +92,8 @@ When the player comes back, the game simulates the elapsed time (capped, e.g.
 
 ### 1.7 Features by phase
 
-- **MVP**: generators, money, upgrades, offline progress, local save,
-  export/import save string.
+- **MVP**: tracks, laps, money, repeatable upgrades, offline progress,
+  local save, export/import save string.
 - **v1**: races, seasons, prestige, reputation, sponsors, settings, PWA.
 - **v2**: accounts + cloud saves, multiple save slots, achievements,
   statistics screen, leaderboard (fastest to first prestige, etc.).
@@ -147,10 +158,15 @@ The game simulation is a pure TypeScript module with **no DOM and no React**.
 It exposes:
 
 ```ts
-tick(state: GameState, dtSeconds: number): GameState   // advance simulation
-buy(state, generatorId, amount): GameState              // player actions
+addDistance(state: GameState, metres: number): GameState  // the one core mutation
+tick(state: GameState, dtSeconds: number): GameState      // = addDistance(state, m/s × dt)
+pedal(state): GameState                                   // = addDistance(state, 1)
+buyUpgrade(state, upgradeId, amount): GameState           // player actions
 prestige(state): GameState
 ```
+
+A tap and a second of auto-pedalling both go through `addDistance`, so manual
+and idle play can never drift apart or pay differently.
 
 Benefits:
 
@@ -180,19 +196,19 @@ All generators, upgrades, and tech-tree nodes live in `src/engine/data/*.ts`
 as typed objects, not in code branches. Balancing = editing data, not logic.
 
 ```ts
-export const GENERATORS: GeneratorDef[] = [
-  { id: 'mechanic', name: 'Mechanic', baseCost: 10, growth: 1.1, baseOutput: 0.5, unlockAt: 0 },
-  {
-    id: 'testDriver',
-    name: 'Test driver',
-    baseCost: 100,
-    growth: 1.12,
-    baseOutput: 4,
-    unlockAt: 50,
-  },
-  // ...
+export const TRACKS: TrackDef[] = [
+  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, payoutPerLap: 5 },
+  // a longer track is one more row
+];
+
+export const UPGRADES: UpgradeDef[] = [
+  { id: 'autoPedal', baseCost: 10, growth: 1.15, effect: { kind: 'speed', perLevel: 0.5 } },
+  { id: 'betterBike', baseCost: 25, growth: 1.6, effect: { kind: 'payout', perLevel: 1.5 } },
 ];
 ```
+
+`UpgradeEffect` is a discriminated union, so a new kind of effect is a new case
+in `formulas.ts` and nothing else changes.
 
 ### 3.4 Folder structure
 
@@ -204,7 +220,7 @@ IncrementalF1/
 │  │  ├─ tick.ts         # tick(state, dt)
 │  │  ├─ actions.ts      # buy, prestige, etc.
 │  │  ├─ formulas.ts     # cost/output math
-│  │  ├─ data/           # generators.ts, upgrades.ts, races.ts
+│  │  ├─ data/           # tracks.ts, upgrades.ts, strings.ts, races.ts
 │  │  └─ save/           # serialize, migrate (v1→v2→...), validate
 │  ├─ store/             # Zustand store bridging engine ↔ UI
 │  ├─ ui/                # React components, screens
@@ -368,13 +384,26 @@ UI, 26 Vitest unit tests, Playwright smoke test, GitHub Actions CI.
   the game runs locally with `pnpm dev` until the MVP is playable.
 - `engine/` skeleton with `GameState`, `tick`, one generator, one test.
 
-### M1 — Playable MVP (1–2 weeks)
+### M1 — The backyard bicycle — done
 
-- 5 generators, ~15 upgrades, money resource, cost/output formulas.
-- Game loop with fixed timestep, offline progress.
-- Local save with autosave, backup slot, export/import.
-- Basic UI: resource header, generator list, upgrade list, settings.
-- break_infinity numbers + formatting.
+Status: shipped. The M0 click-for-money loop was replaced by the real one.
+
+- Tap = 1 m; the backyard loop is 30 m and pays €5 — **money only on lap
+  completion**, remainder carried into the next lap.
+- Tracks are data (`data/tracks.ts`), so a longer track is a row, not code.
+- Two repeatable upgrades (`data/upgrades.ts`): **Auto-pedal** (+0.5 m/s per
+  level) and **Racing tyres** (×1.5 money per lap per level).
+- Visual track map: inline SVG circle with a progress arc and a dot for the
+  bike, driven by pure `pointOnCircle` maths rather than DOM measurement.
+- Save v2 with the first real `migrate.ts` (v1 money and laps carry over, the
+  mechanics are dropped); `fromSave` is now genuinely throw-free.
+- 50 Vitest unit tests, 4 Playwright e2e tests.
+
+### M1.5 — More of the ladder (next)
+
+- More tracks (the park, the local circuit) and the metres-per-tap upgrade.
+- Export/import save string, settings, number-notation option.
+- Offline-progress notice tuned for lap counts rather than a money total.
 
 ### M2 — First deploy (1 evening)
 

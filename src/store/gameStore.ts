@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState } from '@/engine/types';
-import type { GeneratorId } from '@/engine/data/generators';
-import { buyGenerator, driveLap } from '@/engine/actions';
+import type { UpgradeId } from '@/engine/data/upgrades';
+import { buyUpgrade, pedal } from '@/engine/actions';
 import { createInitialState } from '@/engine/state';
 import { advanceTo } from '@/engine/tick';
 
@@ -12,8 +12,8 @@ export interface GameStore {
   /** Money earned while the tab was away, shown once as a welcome-back notice. */
   offlineEarnings: GameState['money'] | null;
 
-  driveLap: () => void;
-  buy: (id: GeneratorId, amount?: number) => void;
+  pedal: () => void;
+  buy: (id: UpgradeId, amount?: number) => void;
   /** Advance the simulation to `nowMs` (used by the loop and by offline catch-up). */
   advance: (nowMs: number, maxCatchUpSeconds?: number) => void;
   replace: (state: GameState) => void;
@@ -27,8 +27,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastSavedAt: null,
   offlineEarnings: null,
 
-  driveLap: () => set({ state: driveLap(get().state) }),
-  buy: (id, amount = 1) => set({ state: buyGenerator(get().state, id, amount) }),
+  pedal: () => set({ state: pedal(get().state) }),
+  buy: (id, amount = 1) => set({ state: buyUpgrade(get().state, id, amount) }),
   advance: (nowMs, maxCatchUpSeconds) => {
     const before = get().state;
     const { state, simulatedSeconds } = advanceTo(before, nowMs, maxCatchUpSeconds);

@@ -1,15 +1,35 @@
 import type { GameState } from './types';
-import { outputPerSecond } from './formulas';
+import { getTrack } from './data/tracks';
+import { autoSpeedMps, moneyPerLap } from './formulas';
 
 /** Default cap on offline catch-up: 8 hours. */
 export const MAX_CATCH_UP_SECONDS = 8 * 60 * 60;
 
+/**
+ * Move the bike `metres` further round the track, paying out every lap that
+ * completes on the way. Both a tap and a second of auto-pedalling go through
+ * here, so the two can never drift apart.
+ */
+export function addDistance(state: GameState, metres: number): GameState {
+  if (!(metres > 0)) return state;
+  const { lapDistanceM } = getTrack(state.trackId);
+  const total = state.lapProgressM + metres;
+  const laps = Math.floor(total / lapDistanceM);
+  // The remainder carries over: distance past the line is never thrown away.
+  const lapProgressM = total - laps * lapDistanceM;
+  if (laps === 0) return { ...state, lapProgressM };
+  return {
+    ...state,
+    money: state.money.add(moneyPerLap(state).mul(laps)),
+    totalLaps: state.totalLaps + laps,
+    lapProgressM,
+  };
+}
+
 /** Advance the simulation by `dtSeconds`. Does not touch lastTickAt; callers set that. */
 export function tick(state: GameState, dtSeconds: number): GameState {
   if (dtSeconds <= 0) return state;
-  const earned = outputPerSecond(state).mul(dtSeconds);
-  if (earned.eq(0)) return state;
-  return { ...state, money: state.money.add(earned) };
+  return addDistance(state, autoSpeedMps(state) * dtSeconds);
 }
 
 export interface AdvanceResult {
@@ -20,8 +40,8 @@ export interface AdvanceResult {
 
 /**
  * Bring the state up to `nowMs`, simulating at most `maxCatchUpSeconds`.
- * Output is linear in M0 so a single tick over the whole gap is exact.
- * When multipliers can change mid-gap this becomes a chunked loop.
+ * Speed and payout cannot change without a purchase, so one call over the whole
+ * gap is exact. When a multiplier can change mid-gap this becomes a chunked loop.
  */
 export function advanceTo(
   state: GameState,
