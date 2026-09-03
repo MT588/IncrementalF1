@@ -23,12 +23,12 @@ lap completes  →  earns € (prize money)  →  buy upgrades  →  laps get fa
 
 ### 1.2 Resources
 
-| Resource        | Symbol | Earned by                          | Spent on                          |
-|-----------------|--------|------------------------------------|-----------------------------------|
-| Prize money     | €      | Completing laps / finishing races  | Parts, staff, facilities          |
-| Research points | RP     | Wind tunnel, simulator (facilities)| Tech tree unlocks                 |
-| Reputation      | ★      | Race results, podiums              | Sponsors (multipliers), driver hires |
-| Championship pts| CP     | Prestige (season reset)            | Permanent upgrades                |
+| Resource         | Symbol | Earned by                           | Spent on                             |
+| ---------------- | ------ | ----------------------------------- | ------------------------------------ |
+| Prize money      | €      | Completing laps / finishing races   | Parts, staff, facilities             |
+| Research points  | RP     | Wind tunnel, simulator (facilities) | Tech tree unlocks                    |
+| Reputation       | ★      | Race results, podiums               | Sponsors (multipliers), driver hires |
+| Championship pts | CP     | Prestige (season reset)             | Permanent upgrades                   |
 
 ### 1.3 Generators (things that produce laps / money)
 
@@ -65,14 +65,14 @@ Tiers (early → late):
 
 ### 1.5 Progression pacing (targets)
 
-| Milestone                        | Target time      |
-|----------------------------------|------------------|
-| First upgrade                    | < 30 seconds     |
-| All tier-1..3 generators visible | ~5 minutes       |
-| First race                       | ~5 minutes       |
-| First prestige                   | 30–60 minutes    |
-| Automation unlocked (auto-buy)   | 2nd prestige     |
-| "Endgame" content                | 20+ hours        |
+| Milestone                        | Target time   |
+| -------------------------------- | ------------- |
+| First upgrade                    | < 30 seconds  |
+| All tier-1..3 generators visible | ~5 minutes    |
+| First race                       | ~5 minutes    |
+| First prestige                   | 30–60 minutes |
+| Automation unlocked (auto-buy)   | 2nd prestige  |
+| "Endgame" content                | 20+ hours     |
 
 ### 1.6 Offline progress
 
@@ -104,18 +104,18 @@ bundles, poor for a UI-driven game).
 
 ### 2.2 Frontend stack
 
-| Concern           | Choice                       | Why                                                   |
-|-------------------|------------------------------|-------------------------------------------------------|
-| Build tool        | **Vite**                     | Fast, zero-config TS, static output                   |
-| UI framework      | **React 19**                 | Largest ecosystem; incremental games are UI-heavy     |
-| Styling           | **Tailwind CSS**             | Fast iteration, tiny CSS, easy dark mode              |
-| State (UI)        | **Zustand**                  | Minimal, works outside React (engine can update it)   |
-| Big numbers       | **break_infinity.js**        | Numbers exceed 1e308 quickly in incrementals          |
-| Number formatting | own `formatNumber()`         | 1.23K / 4.5M / 1.2e15 / "aa" notation, user setting   |
-| Save compression  | **lz-string**                | Compact export strings (base64, URL-safe)             |
-| Tests             | **Vitest** + **Playwright**  | Unit tests for engine; smoke e2e for UI               |
-| Lint/format       | **ESLint** + **Prettier**    |                                                        |
-| Package manager   | **pnpm**                     |                                                        |
+| Concern           | Choice                      | Why                                                 |
+| ----------------- | --------------------------- | --------------------------------------------------- |
+| Build tool        | **Vite**                    | Fast, zero-config TS, static output                 |
+| UI framework      | **React 19**                | Largest ecosystem; incremental games are UI-heavy   |
+| Styling           | **Tailwind CSS**            | Fast iteration, tiny CSS, easy dark mode            |
+| State (UI)        | **Zustand**                 | Minimal, works outside React (engine can update it) |
+| Big numbers       | **break_infinity.js**       | Numbers exceed 1e308 quickly in incrementals        |
+| Number formatting | own `formatNumber()`        | 1.23K / 4.5M / 1.2e15 / "aa" notation, user setting |
+| Save compression  | **lz-string**               | Compact export strings (base64, URL-safe)           |
+| Tests             | **Vitest** + **Playwright** | Unit tests for engine; smoke e2e for UI             |
+| Lint/format       | **ESLint** + **Prettier**   |                                                     |
+| Package manager   | **pnpm**                    |                                                     |
 
 Alternative: Svelte 5 instead of React — smaller and arguably nicer for this
 kind of app. Either is fine; React chosen for ecosystem and hiring familiarity.
@@ -153,6 +153,7 @@ prestige(state): GameState
 ```
 
 Benefits:
+
 - Unit-testable with Vitest (balance tests, "first prestige in N minutes").
 - Offline catch-up is just `tick(state, elapsed)` in chunks.
 - Could later run the same code in an Edge Function to validate saves for
@@ -180,8 +181,15 @@ as typed objects, not in code branches. Balancing = editing data, not logic.
 
 ```ts
 export const GENERATORS: GeneratorDef[] = [
-  { id: 'mechanic', name: 'Mechanic', baseCost: 10, growth: 1.10, baseOutput: 0.5, unlockAt: 0 },
-  { id: 'testDriver', name: 'Test driver', baseCost: 100, growth: 1.12, baseOutput: 4, unlockAt: 50 },
+  { id: 'mechanic', name: 'Mechanic', baseCost: 10, growth: 1.1, baseOutput: 0.5, unlockAt: 0 },
+  {
+    id: 'testDriver',
+    name: 'Test driver',
+    baseCost: 100,
+    growth: 1.12,
+    baseOutput: 4,
+    unlockAt: 50,
+  },
   // ...
 ];
 ```
@@ -223,21 +231,22 @@ One JSON object, versioned:
 
 ```ts
 interface SaveFile {
-  version: number;          // schema version, bump on breaking change
-  createdAt: number;        // ms epoch
-  lastSavedAt: number;      // ms epoch — used for offline progress
-  playtimeSeconds: number;  // used for conflict resolution
-  state: GameState;         // resources, generator counts, upgrades, prestige
-  settings: Settings;       // notation, theme, autosave interval
+  version: number; // schema version, bump on breaking change
+  createdAt: number; // ms epoch
+  lastSavedAt: number; // ms epoch — used for offline progress
+  playtimeSeconds: number; // used for conflict resolution
+  state: GameState; // resources, generator counts, upgrades, prestige
+  settings: Settings; // notation, theme, autosave interval
 }
 ```
 
 Rules:
+
 - **Never** store derived values (e.g. €/sec); recompute on load.
 - Every schema change ships with a migration `migrateV(n)→(n+1)`. Migrations
   run in sequence on load. Tested with fixture saves from each version.
 - Validate after migration (zod or hand-written) and refuse to load
-  corrupt saves *without overwriting the stored one* — keep a backup slot.
+  corrupt saves _without overwriting the stored one_ — keep a backup slot.
 
 ### 4.2 Phase 1 — local only (MVP)
 
@@ -284,7 +293,7 @@ leaderboards, written only by an Edge Function that re-simulates the save.
    - same `playtimeSeconds` → nothing to do;
    - cloud has more playtime → offer "Load cloud save?" (default yes);
    - local has more → upload local.
-   Never silently overwrite the one with more playtime.
+     Never silently overwrite the one with more playtime.
 4. Handle multi-tab: a `BroadcastChannel` message tells other tabs a save
    happened; the loser reloads state instead of clobbering.
 
@@ -304,15 +313,16 @@ the save row).
 The game is a **static site**: HTML + JS + CSS. No server is needed for
 phase 1; phase 2 talks to Supabase directly from the browser.
 
-| Option              | Cost | Notes                                                      |
-|---------------------|------|------------------------------------------------------------|
-| **Cloudflare Pages**| Free | Unlimited bandwidth, global CDN, previews per PR. **Pick this.** |
-| Vercel              | Free | Equally good; 100 GB/month bandwidth on hobby plan          |
-| Netlify             | Free | Same class                                                 |
-| GitHub Pages        | Free | Fine for MVP, no preview deploys, no headers control       |
+| Option               | Cost | Notes                                                            |
+| -------------------- | ---- | ---------------------------------------------------------------- |
+| **Cloudflare Pages** | Free | Unlimited bandwidth, global CDN, previews per PR. **Pick this.** |
+| Vercel               | Free | Equally good; 100 GB/month bandwidth on hobby plan               |
+| Netlify              | Free | Same class                                                       |
+| GitHub Pages         | Free | Fine for MVP, no preview deploys, no headers control             |
 
 Setup (done in M2, after the MVP is playable — until then the game runs
 locally with `pnpm dev`):
+
 - Connect the GitHub repo to Cloudflare Pages; build command `pnpm build`,
   output `dist/`. Every push to `main` deploys; every PR gets a preview URL.
 - Custom domain optional (~€10/year). Cloudflare gives free TLS.
@@ -347,13 +357,19 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 
 ## 7. Roadmap
 
-### M0 — Scaffold (1 evening)
+### M0 — Scaffold (1 evening) — done
+
+Status: shipped. Vite + React 19 + TS + Tailwind 4, pure engine with the
+Mechanic generator, fixed-step loop, localStorage autosave, dark timing-screen
+UI, 26 Vitest unit tests, Playwright smoke test, GitHub Actions CI.
+
 - Vite + React + TS + Tailwind + Vitest + ESLint/Prettier, pnpm.
 - GitHub Actions CI on PR (lint, typecheck, test, build). No deploy yet;
   the game runs locally with `pnpm dev` until the MVP is playable.
 - `engine/` skeleton with `GameState`, `tick`, one generator, one test.
 
 ### M1 — Playable MVP (1–2 weeks)
+
 - 5 generators, ~15 upgrades, money resource, cost/output formulas.
 - Game loop with fixed timestep, offline progress.
 - Local save with autosave, backup slot, export/import.
@@ -361,23 +377,27 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 - break_infinity numbers + formatting.
 
 ### M2 — First deploy (1 evening)
+
 - Connect the repo to Cloudflare Pages; production deploy from `main`,
   preview URL per PR.
 - Cloudflare Web Analytics, favicon, share the link with a few testers.
 - From here on every merge to `main` ships automatically.
 
 ### M3 — Races, seasons, prestige (2–3 weeks)
+
 - Race simulation vs AI field, reputation, sponsors.
 - Season of 20 races → prestige → Championship points shop.
 - Automation upgrades; achievements.
 - Balance pass using simulation tests. PWA.
 
 ### M4 — Accounts and cloud saves (1–2 weeks)
+
 - Supabase project, `saves` table + RLS, auth (magic link, Google, anonymous).
 - Sync logic (playtime-based conflict resolution), multi-tab safety.
 - Account deletion.
 
 ### M5 — Polish & community (ongoing)
+
 - Statistics screen, changelog, sound toggles, track animation (canvas).
 - Leaderboards via Edge Function validation.
 - Events / limited-time challenges.
@@ -386,10 +406,10 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
 
 ## 8. Open decisions
 
-| Question                         | Default                        | Decide by |
-|----------------------------------|--------------------------------|-----------|
-| React vs Svelte                  | React                          | M0        |
-| Real-time races vs lap-count races | Lap-count (deterministic, works offline) | M3 |
-| Anonymous accounts on by default | Yes                            | M4        |
-| Leaderboards at all              | Only after M4, if players ask  | M5        |
-| Monetisation                     | None (hobby); maybe donations  | —         |
+| Question                           | Default                                  | Decide by |
+| ---------------------------------- | ---------------------------------------- | --------- |
+| React vs Svelte                    | React                                    | M0        |
+| Real-time races vs lap-count races | Lap-count (deterministic, works offline) | M3        |
+| Anonymous accounts on by default   | Yes                                      | M4        |
+| Leaderboards at all                | Only after M4, if players ask            | M5        |
+| Monetisation                       | None (hobby); maybe donations            | —         |
