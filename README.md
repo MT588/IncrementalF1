@@ -42,6 +42,18 @@ src/
 e2e/          Playwright tests
 ```
 
+## Branches
+
+| Branch      | Role                                                        |
+| ----------- | ----------------------------------------------------------- |
+| `main`      | Release branch. Always deployable; production deploys here. |
+| `develop`   | Integration branch. Day-to-day work lands here first.       |
+| `feature/*` | One branch per change, opened as a PR against `develop`.    |
+
+Workflow: branch off `develop` → PR into `develop` → CI must be green →
+merge. When `develop` is stable, open a PR from `develop` into `main` to cut a
+release. CI runs on every PR and on pushes to `main` and `develop`.
+
 ## Save data
 
 Progress is stored in `localStorage` under `incf1:save` as versioned JSON.
