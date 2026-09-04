@@ -4,7 +4,15 @@ import type { UpgradeId } from './data/upgrades';
 
 /** Everything the simulation needs. Serialisable (see save/serialize.ts). Never holds derived values. */
 export interface GameState {
-  /** Money in euros. Only ever earned by completing a lap. */
+  /**
+   * Experience, the currency every upgrade is bought with. Earned only by
+   * completing a lap, and the amount is derived from the metres of that lap.
+   */
+  xp: Decimal;
+  /**
+   * Prize money. Reserved for race payouts (M3): nothing earns it yet and no
+   * UI shows it, so it is always zero for now.
+   */
   money: Decimal;
   /** The track currently being ridden. */
   trackId: TrackId;
@@ -28,24 +36,41 @@ export interface TrackDef {
   description: string;
   /** One lap of this track, in metres. */
   lapDistanceM: number;
-  /** Base euros paid for completing one lap, before payout upgrades. */
-  payoutPerLap: number;
+  /**
+   * XP earned per metre driven here, before xpMult upgrades. A lap therefore
+   * pays `lapDistanceM × xpPerMetre`, so longer tracks pay more per lap.
+   * Note that XP *per second* does not depend on lap distance (it cancels),
+   * so a later track only feels like a promotion if this number goes up.
+   */
+  xpPerMetre: number;
 }
 
 /** What one level of an upgrade does. Add a kind here and handle it in formulas.ts. */
 export type UpgradeEffect =
   /** Adds metres per second of automatic pedalling. */
   | { kind: 'speed'; perLevel: number }
-  /** Multiplies the money earned per completed lap. */
-  | { kind: 'payout'; perLevel: number };
+  /** Multiplies the XP earned per completed lap. */
+  | { kind: 'xpMult'; perLevel: number }
+  /** Adds metres to every push of the pedals, by hand or by the training partner. */
+  | { kind: 'tapMetres'; perLevel: number }
+  /** Multiplies the total automatic speed, however that speed was earned. */
+  | { kind: 'speedMult'; perLevel: number }
+  /** Adds automatic taps per second, each worth a full metresPerTap. */
+  | { kind: 'autoTaps'; perLevel: number };
 
 export interface UpgradeDef {
   id: UpgradeId;
   name: string;
   description: string;
-  /** Cost of the first level, in euros. */
+  /** Cost of the first level, in XP. */
   baseCost: number;
   /** Multiplicative cost growth per level owned. */
   growth: number;
+  /**
+   * Completed laps needed before this appears in the shed at all. 0 means it is
+   * there from the first ride. Gating on laps rather than XP keeps the reveal
+   * tied to something the player did, not to a balance they happen to hold.
+   */
+  unlockAtLaps: number;
   effect: UpgradeEffect;
 }

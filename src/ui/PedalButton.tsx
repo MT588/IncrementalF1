@@ -1,9 +1,11 @@
-import { STRINGS } from '@/engine/data/strings';
+import { STRINGS, pedalHint } from '@/engine/data/strings';
+import { metresPerTap } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 
 export function PedalButton() {
   const pedal = useGameStore((s) => s.pedal);
   const metres = useGameStore((s) => s.state.totalTapsM);
+  const perTap = useGameStore((s) => metresPerTap(s.state));
 
   return (
     <div className="flex items-center gap-4">
@@ -15,7 +17,9 @@ export function PedalButton() {
         {STRINGS.PEDAL}
       </button>
       <div className="text-right text-xs tabular-nums">
-        <p className="text-ink-muted">{STRINGS.PEDAL_HINT}</p>
+        <p className="text-ink-muted" data-testid="pedal-hint">
+          {pedalHint(perTap)}
+        </p>
         <p className="text-ink-muted mt-1" data-testid="tapped-metres">
           <span className="text-ink">{metres}</span> m by leg
         </p>

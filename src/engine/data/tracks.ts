@@ -9,7 +9,7 @@ export const TRACKS: readonly TrackDef[] = [
     name: 'Backyard loop',
     description: 'Once around the garden, past the shed and back.',
     lapDistanceM: 30,
-    payoutPerLap: 5,
+    xpPerMetre: 1,
   },
 ];
 

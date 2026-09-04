@@ -9,8 +9,8 @@ export interface GameStore {
   state: GameState;
   /** ms since epoch of the last successful save, null when never saved. */
   lastSavedAt: number | null;
-  /** Money earned while the tab was away, shown once as a welcome-back notice. */
-  offlineEarnings: GameState['money'] | null;
+  /** XP earned while the tab was away, shown once as a welcome-back notice. */
+  offlineXp: GameState['xp'] | null;
 
   pedal: () => void;
   buy: (id: UpgradeId, amount?: number) => void;
@@ -19,13 +19,13 @@ export interface GameStore {
   replace: (state: GameState) => void;
   reset: () => void;
   markSaved: (at: number) => void;
-  dismissOfflineEarnings: () => void;
+  dismissOfflineXp: () => void;
 }
 
 export const useGameStore = create<GameStore>((set, get) => ({
   state: createInitialState(Date.now()),
   lastSavedAt: null,
-  offlineEarnings: null,
+  offlineXp: null,
 
   pedal: () => set({ state: pedal(get().state) }),
   buy: (id, amount = 1) => set({ state: buyUpgrade(get().state, id, amount) }),
@@ -33,15 +33,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const before = get().state;
     const { state, simulatedSeconds } = advanceTo(before, nowMs, maxCatchUpSeconds);
     // Anything over a minute counts as "away": surface it once to the player.
-    const earned = state.money.sub(before.money);
-    const offlineEarnings = simulatedSeconds >= 60 && earned.gt(0) ? earned : get().offlineEarnings;
-    set({ state, offlineEarnings });
+    const earned = state.xp.sub(before.xp);
+    const offlineXp = simulatedSeconds >= 60 && earned.gt(0) ? earned : get().offlineXp;
+    set({ state, offlineXp });
   },
-  replace: (state) => set({ state, offlineEarnings: null }),
-  reset: () =>
-    set({ state: createInitialState(Date.now()), lastSavedAt: null, offlineEarnings: null }),
+  replace: (state) => set({ state, offlineXp: null }),
+  reset: () => set({ state: createInitialState(Date.now()), lastSavedAt: null, offlineXp: null }),
   markSaved: (at) => set({ lastSavedAt: at }),
-  dismissOfflineEarnings: () => set({ offlineEarnings: null }),
+  dismissOfflineXp: () => set({ offlineXp: null }),
 }));
 
 /** Non-hook access for services (loop, autosave). */

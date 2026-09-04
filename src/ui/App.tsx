@@ -1,5 +1,6 @@
-import { STRINGS } from '@/engine/data/strings';
-import { UPGRADES } from '@/engine/data/upgrades';
+import { STRINGS, nextUnlockHint } from '@/engine/data/strings';
+import { nextUnlockAtLaps, unlockedUpgrades } from '@/engine/formulas';
+import { useGameStore } from '@/store/gameStore';
 import { Footer } from './Footer';
 import { Header } from './Header';
 import { PedalButton } from './PedalButton';
@@ -8,6 +9,12 @@ import { UpgradeRow } from './UpgradeRow';
 import { WelcomeBack } from './WelcomeBack';
 
 export function App() {
+  // Subscribe to the lap count alone: the shed only changes shape when a lap
+  // lands, not on every tick of the loop.
+  const totalLaps = useGameStore((s) => s.state.totalLaps);
+  const shown = unlockedUpgrades(totalLaps);
+  const nextAt = nextUnlockAtLaps(totalLaps);
+
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 py-6">
       <Header />
@@ -23,10 +30,15 @@ export function App() {
             {STRINGS.SHED}
           </h2>
           <ul className="border-line divide-line divide-y rounded-sm border">
-            {UPGRADES.map((def) => (
+            {shown.map((def) => (
               <UpgradeRow key={def.id} def={def} />
             ))}
           </ul>
+          {nextAt !== null && (
+            <p className="text-ink-muted mt-2 text-xs" data-testid="next-unlock">
+              {nextUnlockHint(nextAt)}
+            </p>
+          )}
         </section>
       </main>
       <Footer />

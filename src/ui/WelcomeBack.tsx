@@ -1,20 +1,20 @@
 import { STRINGS } from '@/engine/data/strings';
 import { useGameStore } from '@/store/gameStore';
-import { formatMoney } from '@/util/formatNumber';
+import { formatXp } from '@/util/formatNumber';
 
 export function WelcomeBack() {
-  const earnings = useGameStore((s) => s.offlineEarnings);
-  const dismiss = useGameStore((s) => s.dismissOfflineEarnings);
-  if (!earnings) return null;
+  const earned = useGameStore((s) => s.offlineXp);
+  const dismiss = useGameStore((s) => s.dismissOfflineXp);
+  if (!earned) return null;
 
   return (
     <div
       role="status"
+      data-testid="welcome-back"
       className="border-sector-green bg-panel mt-4 flex items-center justify-between gap-3 border-l-4 px-4 py-3 text-sm"
     >
       <p>
-        {STRINGS.WELCOME_BACK}{' '}
-        <span className="text-sector-green tabular-nums">{formatMoney(earnings)}</span>.
+        {STRINGS.WELCOME_BACK} <span className="text-sector-green tabular-nums">{formatXp(earned)}</span>.
       </p>
       <button
         type="button"

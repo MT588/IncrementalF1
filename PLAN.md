@@ -2,10 +2,12 @@
 
 A browser-based incremental (idle) game about riding your way from a bicycle in
 the backyard to a Formula 1 team. You start on a bike, tapping out one metre at
-a time round a thirty-metre loop; **money only arrives when you complete a lap**.
-Money buys upgrades that pedal for you and make each lap pay more, then longer
-tracks, faster machines and eventually a real car. At the end of a "season" you
-can reset for permanent bonuses (prestige) and climb the constructors' ladder.
+a time round a thirty-metre loop; **XP only arrives when you complete a lap**.
+XP buys upgrades that pedal for you and make each lap pay more, then longer
+tracks, faster machines and eventually a real car. Prize money is a second
+currency, paid for finishing races rather than for distance. At the end of a
+"season" you can reset for permanent bonuses (prestige) and climb the
+constructors' ladder.
 
 This document is the full plan: game design, technology choices, architecture,
 save/state storage per user, hosting, and a milestone roadmap.
@@ -17,14 +19,14 @@ save/state storage per user, hosting, and a milestone roadmap.
 ### 1.1 Core loop
 
 ```
-tap (+1 m)  →  distance covers a lap  →  lap completes → earns €  →  buy upgrades
-    ↑                    ↑                                                  │
-    │        auto-pedal adds m/s on its own                                 │
-    └──────────────── upgrades: more m/s, more € per lap ───────────────────┘
+tap (+1 m)  →  distance covers a lap  →  lap completes → earns XP →  buy upgrades
+    ↑                    ↑                                                   │
+    │        auto-pedal adds m/s on its own                                  │
+    └──────────────── upgrades: more m/s, more XP per lap ───────────────────┘
                  occasionally: end season, prestige, restart stronger
 ```
 
-The important rule: **a tap is distance, not money.** Taps move the bike; only
+The important rule: **a tap is distance, not XP.** Taps move the bike; only
 crossing the finish line pays. Distance past the line carries into the next lap,
 so nothing a player does is ever wasted.
 
@@ -32,35 +34,58 @@ so nothing a player does is ever wasted.
 
 | Resource         | Symbol | Earned by                           | Spent on                             |
 | ---------------- | ------ | ----------------------------------- | ------------------------------------ |
-| Prize money      | €      | Completing laps / finishing races   | Parts, staff, facilities             |
+| Experience       | XP     | Metres driven (paid out per lap)    | Every upgrade in the shed            |
+| Prize money      | €      | Finishing races                     | Parts, staff, facilities             |
 | Research points  | RP     | Wind tunnel, simulator (facilities) | Tech tree unlocks                    |
 | Reputation       | ★      | Race results, podiums               | Sponsors (multipliers), driver hires |
 | Championship pts | CP     | Prestige (season reset)             | Permanent upgrades                   |
 
+XP is the distance currency and the only one that exists today; money is the
+event currency and stays at zero until races arrive in M3. Keeping them apart is
+what lets a race be worth something no amount of riding can buy.
+
 ### 1.3 Tracks and upgrades
 
-A **track** is just a distance and a payout. The backyard loop is 30 m and pays
-€5; later tracks are longer and pay more. Adding one is a data row, not code.
+A **track** is a distance and an XP rate. The backyard loop is 30 m at 1 XP a
+metre, so a lap pays 30 XP; adding one is a data row, not code.
+
+Because a lap is worth the metres it takes to ride it, XP *per second* works out
+to `m/s × xpPerMetre` — the lap distance cancels. A longer track therefore pays
+the same per second as a short one, just in larger and rarer chunks, which feels
+worse rather than better. **Later tracks have to raise `xpPerMetre` to be a
+promotion**; length alone is not a progression lever.
 
 Every **upgrade** is repeatable — cost grows per level, the effect stacks:
 
 ```
-cost(n) = baseCost × growth^n              growth ≈ 1.07–1.6
-effect:   { kind: 'speed',  perLevel }     +m/s of automatic pedalling
-          { kind: 'payout', perLevel }     ×money per completed lap
+cost(n) = baseCost × growth^n                 growth ≈ 1.07–2.2
+effect:   { kind: 'speed',     perLevel }     +m/s of automatic pedalling
+          { kind: 'xpMult',    perLevel }     ×XP per completed lap
+          { kind: 'tapMetres', perLevel }     +m per push of the pedals
+          { kind: 'speedMult', perLevel }     ×the whole automatic speed
+          { kind: 'autoTaps',  perLevel }     +taps/s, each worth metresPerTap
 ```
 
-Ladder (early → late):
+Upgrades are also **revealed by laps driven**, not all at once: each one carries
+an `unlockAtLaps` and stays out of the shed until the player has ridden that
+far. The gate is a reveal rather than a block — it is set to land shortly before
+the upgrade is affordable, so the player meets one new thing at a time instead
+of a wall of five. Gating on laps rather than on an XP balance ties the reveal
+to something they did.
 
-1. **Auto-pedal** – the bike keeps rolling on its own, slowly. _(M1)_
-2. **Racing tyres** – every finished lap pays more. _(M1)_
-3. **Bigger gears** – more metres per tap.
-4. **Longer tracks** – the park, the local circuit, a real track.
-5. **A moped, then a car** – large jumps in m/s and payout.
-6. **Mechanic / test driver** – staff who ride laps for you.
-7. **Wind tunnel, simulator** – produce RP.
-8. **Second car** – doubles everything, very expensive.
-9. **Factory** – global multiplier, late game.
+Ladder (early → late), with the lap each one appears at:
+
+1. **Bigger gears** – more metres per push of the pedals. _0 laps, M1.5_
+2. **Auto-pedal** – the bike keeps rolling on its own, slowly. _1 lap, M1_
+3. **Racing tyres** – every finished lap pays more. _3 laps, M1_
+4. **Slipstream** – multiplies the whole automatic speed. _10 laps, M1.5_
+5. **Training partner** – pedals for you, with your gears on. _20 laps, M1.5_
+6. **Longer tracks** – the park, the local circuit, a real track.
+7. **A moped, then a car** – large jumps in m/s and payout.
+8. **Mechanic / test driver** – staff who ride laps for you.
+9. **Wind tunnel, simulator** – produce RP.
+10. **Second car** – doubles everything, very expensive.
+11. **Factory** – global multiplier, late game.
 
 ### 1.4 Races and seasons
 
@@ -68,7 +93,7 @@ Ladder (early → late):
   counter hits a target). Your lap speed vs. AI field determines finishing
   position → payout + reputation.
 - A **season** is 20 races. Finishing a season lets you **prestige**: reset
-  money, upgrades, and RP, but keep Championship points which buy permanent
+  XP, upgrades, and RP, but keep Championship points which buy permanent
   boosts (starting cash, +% output, unlock automation).
 - Prestige is the retention hook. First prestige should be reachable in
   ~30–60 minutes of active play.
@@ -77,8 +102,8 @@ Ladder (early → late):
 
 | Milestone                      | Target time   |
 | ------------------------------ | ------------- |
-| First lap (30 taps)            | < 15 seconds  |
-| First upgrade (auto-pedal)     | < 30 seconds  |
+| First lap (30 taps)            | < 10 seconds  |
+| First upgrade (bigger gears)   | on that lap   |
 | Second track unlocked          | ~5 minutes    |
 | First race                     | ~5 minutes    |
 | First prestige                 | 30–60 minutes |
@@ -92,9 +117,10 @@ When the player comes back, the game simulates the elapsed time (capped, e.g.
 
 ### 1.7 Features by phase
 
-- **MVP**: tracks, laps, money, repeatable upgrades, offline progress,
-  local save, export/import save string.
-- **v1**: races, seasons, prestige, reputation, sponsors, settings, PWA.
+- **MVP**: everything up to and including the first prestige — tracks, laps,
+  XP, repeatable upgrades, offline progress, local save, export/import save
+  string, and one prestige that resets progress and opens the next track.
+- **v1**: races, seasons, reputation, sponsors, settings, PWA.
 - **v2**: accounts + cloud saves, multiple save slots, achievements,
   statistics screen, leaderboard (fastest to first prestige, etc.).
 - **later**: events/limited-time challenges, driver market, cosmetic liveries.
@@ -197,13 +223,14 @@ as typed objects, not in code branches. Balancing = editing data, not logic.
 
 ```ts
 export const TRACKS: TrackDef[] = [
-  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, payoutPerLap: 5 },
+  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, xpPerMetre: 1 },
   // a longer track is one more row
 ];
 
 export const UPGRADES: UpgradeDef[] = [
-  { id: 'autoPedal', baseCost: 10, growth: 1.15, effect: { kind: 'speed', perLevel: 0.5 } },
-  { id: 'betterBike', baseCost: 25, growth: 1.6, effect: { kind: 'payout', perLevel: 1.5 } },
+  // unlockAtLaps hides an upgrade until that many laps have been completed.
+  { id: 'biggerGears', baseCost: 25, growth: 1.9, unlockAtLaps: 0, effect: { kind: 'tapMetres', perLevel: 1 } },
+  { id: 'autoPedal', baseCost: 90, growth: 1.15, unlockAtLaps: 1, effect: { kind: 'speed', perLevel: 0.5 } },
 ];
 ```
 
@@ -258,7 +285,7 @@ interface SaveFile {
 
 Rules:
 
-- **Never** store derived values (e.g. €/sec); recompute on load.
+- **Never** store derived values (e.g. XP/sec); recompute on load.
 - Every schema change ships with a migration `migrateV(n)→(n+1)`. Migrations
   run in sequence on load. Tested with fixture saves from each version.
 - Validate after migration (zod or hand-written) and refuse to load
@@ -364,7 +391,7 @@ Total running cost for a hobby project: **€0/month** (domain excluded).
   time-to-milestone simulation. Or better: a Vitest "simulation" test that
   plays optimally with a greedy buyer and asserts milestone timings
   (`expect(timeToFirstPrestige).toBeLessThan(60 * 60)`).
-- Add a `?debug=1` panel in dev builds: add money, fast-forward time,
+- Add a `?debug=1` panel in dev builds: add XP, fast-forward time,
   reset save.
 - Ship with a settings option for number notation (standard / scientific /
   engineering / letters).
@@ -387,23 +414,89 @@ UI, 26 Vitest unit tests, Playwright smoke test, GitHub Actions CI.
 ### M1 — The backyard bicycle — done
 
 Status: shipped. The M0 click-for-money loop was replaced by the real one.
+(Historical: the single currency here was money at €5 a lap. M1.6 replaced it
+with XP — see below.)
 
-- Tap = 1 m; the backyard loop is 30 m and pays €5 — **money only on lap
+- Tap = 1 m; the backyard loop is 30 m and paid €5 — **money only on lap
   completion**, remainder carried into the next lap.
 - Tracks are data (`data/tracks.ts`), so a longer track is a row, not code.
 - Two repeatable upgrades (`data/upgrades.ts`): **Auto-pedal** (+0.5 m/s per
-  level) and **Racing tyres** (×1.5 money per lap per level).
+  level) and **Racing tyres** (×1.5 per lap per level).
 - Visual track map: inline SVG circle with a progress arc and a dot for the
   bike, driven by pure `pointOnCircle` maths rather than DOM measurement.
 - Save v2 with the first real `migrate.ts` (v1 money and laps carry over, the
   mechanics are dropped); `fromSave` is now genuinely throw-free.
 - 50 Vitest unit tests, 4 Playwright e2e tests.
 
-### M1.5 — More of the ladder (next)
+### M1.5 — More of the ladder — done
 
-- More tracks (the park, the local circuit) and the metres-per-tap upgrade.
+Status: shipped. Three upgrades on top of the M1 pair, each a new effect kind
+in `UpgradeEffect` plus one branch in `formulas.ts`:
+
+- **Bigger gears** (`tapMetres`, +1 m per level) — keeps the pedal button worth
+  pressing once auto-pedal exists.
+- **Slipstream** (`speedMult`, ×1.2 per level) — the multiplicative partner to
+  auto-pedal's additive m/s, so going back for more levels stays worthwhile.
+- **Training partner** (`autoTaps`, +0.5 taps/s per level) — taps for you at
+  your current `metresPerTap`, which is what makes gears an idle upgrade too.
+
+Order of operations: additive speed sources first (auto-pedal + the partner's
+taps), then the multipliers on that total. `metresPerTap` feeds both a hand tap
+and the partner, so the two can never drift apart.
+
+### M1.6 — Two currencies, and one upgrade at a time — done
+
+Status: shipped. The single `money` currency became **XP earned from distance**,
+with money reserved for race payouts.
+
+- `GameState.xp` is what every upgrade costs; `GameState.money` ships alongside
+  it at zero, with no earner and no UI, so the two-currency shape is settled and
+  there is one migration rather than two.
+- `TrackDef.payoutPerLap` became `xpPerMetre` (backyard = 1), so a lap is worth
+  the metres it takes to ride it: 30 XP. The `'payout'` effect kind became
+  `'xpMult'`.
+- Costs rescaled ×6 to match the 5 → 30 income change, **except auto-pedal**,
+  cut to 25 so the first upgrade lands on the first completed lap (~8 s) instead
+  of the second (~15 s). The others keep their old pacing in laps: 3, 5, 20, 80.
+- Save v3 with `migrateV2toV3`, converting an old money balance at the same ×6.
+  The multiply forced a shared `save/amount.ts` parser: `migrate()` runs before
+  any field validation, and `new Decimal('abc')` throws, so the conversion has
+  to fail as a null return to keep `fromSave` throw-free.
+
+Then the early game was reshaped so the player meets one thing at a time:
+
+- **Bigger gears is now the first upgrade** (25 XP, affordable on the first
+  completed lap) and **auto-pedal is second** (90 XP, three laps). Gears first
+  is the better opening move: it is immediate and tactile, and it makes the
+  next lap arrive twice as fast.
+- Every upgrade carries an `unlockAtLaps` and is hidden until then — 0, 1, 3,
+  10, 20 — so an empty backyard shows exactly one row. `buyUpgrade` enforces the
+  gate too, not just the UI, so a locked upgrade cannot be bought at any price.
+- A muted line under the shed names the lap the next upgrade opens at.
+- The shed reads as a price list, with each number in one place only: the row
+  shows the name, the level and **what the upgrade is worth as it stands**
+  ("3 m per tap"); the buy button shows the cost and **what one more level
+  adds** ("+1 m", "×1.5 XP"), which is constant per level for additive and
+  multiplicative effects alike; and only the flavour description waits behind a
+  hover **ⓘ**. No "current → next" arrows anywhere. The icon is a real button,
+  so keyboard focus and a tap reveal the tooltip too — hover alone would hide
+  the text from every phone.
+- 79 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.7 — The rest of the ladder (next)
+
+- More tracks (the park, the local circuit).
 - Export/import save string, settings, number-notation option.
-- Offline-progress notice tuned for lap counts rather than a money total.
+- Offline-progress notice tuned for lap counts rather than an XP total.
+
+### M1.8 — First prestige (completes the MVP)
+
+- A prestige unlock condition that does not need races yet (total laps or a
+  XP threshold — **open decision**).
+- `prestige(state)`: reset XP and upgrade levels (and decide what it does to
+  the race money balance), keep lifetime stats, award
+  the permanent currency, unlock the next track.
+- Save version bump plus migration for the new fields.
 
 ### M2 — First deploy (1 evening)
 
@@ -412,10 +505,11 @@ Status: shipped. The M0 click-for-money loop was replaced by the real one.
 - Cloudflare Web Analytics, favicon, share the link with a few testers.
 - From here on every merge to `main` ships automatically.
 
-### M3 — Races, seasons, prestige (2–3 weeks)
+### M3 — Races and seasons (2–3 weeks)
 
 - Race simulation vs AI field, reputation, sponsors.
-- Season of 20 races → prestige → Championship points shop.
+- Season of 20 races, which becomes the prestige trigger in place of the
+  simpler M1.7 condition; Championship points shop.
 - Automation upgrades; achievements.
 - Balance pass using simulation tests. PWA.
 

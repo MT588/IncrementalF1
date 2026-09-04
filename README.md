@@ -1,11 +1,14 @@
 # IncrementalF1
 
 A browser incremental game about riding from a bicycle in the backyard to a
-Formula 1 team. Tap the pedals to cover distance; every completed lap pays.
+Formula 1 team. Tap the pedals to cover distance; every completed lap pays XP.
 Buy upgrades that pedal for you and make each lap worth more.
 
-Status: **M1**. Backyard loop (30 m, one metre per tap), a visual track map,
-two repeatable upgrades, offline progress, local autosave.
+Status: **M1.6**. Backyard loop (30 m, one metre per tap, 1 XP a metre), a
+visual track map, five repeatable upgrades revealed as the laps add up, offline
+progress, local autosave. XP is the only currency for now; prize money arrives
+with races.
+
 See [PLAN.md](./PLAN.md) for the full design and roadmap.
 
 ## Run it
@@ -103,7 +106,8 @@ instead of opening a PR per change. CI still runs on every push to it.
 ## Save data
 
 Progress is stored in `localStorage` under `incf1:save` as versioned JSON
-(currently version 2). Money is serialised as a string so values beyond
-`Number.MAX_VALUE` survive. Older saves are upgraded on load by
+(currently version 3). Currency amounts — XP, and the money reserved for race
+payouts — are serialised as strings so values beyond `Number.MAX_VALUE`
+survive. Older saves are upgraded on load by
 `src/engine/save/migrate.ts`; anything unrecognised is refused rather than
 partially loaded, so a bad save is never written over a good one.

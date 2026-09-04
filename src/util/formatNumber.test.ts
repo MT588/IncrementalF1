@@ -1,6 +1,6 @@
 import Decimal from 'break_infinity.js';
 import { describe, expect, it } from 'vitest';
-import { formatMoney, formatNumber } from './formatNumber';
+import { formatNumber, formatXp } from './formatNumber';
 
 describe('formatNumber', () => {
   it('keeps two decimals below a thousand', () => {
@@ -20,8 +20,9 @@ describe('formatNumber', () => {
     expect(formatNumber(new Decimal('1.23e39'))).toBe('1.23e39');
   });
 
-  it('handles negatives and the euro prefix', () => {
+  it('handles negatives and the XP suffix', () => {
     expect(formatNumber(-1500)).toBe('-1.50K');
-    expect(formatMoney(10)).toBe('€10.00');
+    expect(formatXp(10)).toBe('10.00 XP');
+    expect(formatXp(1234)).toBe('1.23K XP');
   });
 });

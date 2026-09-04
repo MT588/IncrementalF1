@@ -10,6 +10,7 @@ export function createInitialState(now: number): GameState {
     number
   >;
   return {
+    xp: new Decimal(0),
     money: new Decimal(0),
     trackId: STARTING_TRACK_ID,
     lapProgressM: 0,

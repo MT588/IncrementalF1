@@ -1,6 +1,6 @@
 import type { GameState } from './types';
 import { getTrack } from './data/tracks';
-import { autoSpeedMps, moneyPerLap } from './formulas';
+import { autoSpeedMps, xpPerLap } from './formulas';
 
 /** Default cap on offline catch-up: 8 hours. */
 export const MAX_CATCH_UP_SECONDS = 8 * 60 * 60;
@@ -8,7 +8,8 @@ export const MAX_CATCH_UP_SECONDS = 8 * 60 * 60;
 /**
  * Move the bike `metres` further round the track, paying out every lap that
  * completes on the way. Both a tap and a second of auto-pedalling go through
- * here, so the two can never drift apart.
+ * here, so the two can never drift apart. This is the only place any currency
+ * is earned — `money` is untouched until races arrive.
  */
 export function addDistance(state: GameState, metres: number): GameState {
   if (!(metres > 0)) return state;
@@ -20,7 +21,7 @@ export function addDistance(state: GameState, metres: number): GameState {
   if (laps === 0) return { ...state, lapProgressM };
   return {
     ...state,
-    money: state.money.add(moneyPerLap(state).mul(laps)),
+    xp: state.xp.add(xpPerLap(state).mul(laps)),
     totalLaps: state.totalLaps + laps,
     lapProgressM,
   };
@@ -40,8 +41,9 @@ export interface AdvanceResult {
 
 /**
  * Bring the state up to `nowMs`, simulating at most `maxCatchUpSeconds`.
- * Speed and payout cannot change without a purchase, so one call over the whole
- * gap is exact. When a multiplier can change mid-gap this becomes a chunked loop.
+ * Speed and XP per lap cannot change without a purchase, so one call over the
+ * whole gap is exact. When a multiplier can change mid-gap this becomes a
+ * chunked loop.
  */
 export function advanceTo(
   state: GameState,

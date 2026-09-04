@@ -8,36 +8,81 @@ async function pedal(page: Page, times: number) {
 test('a lap of the backyard pays, and nothing before it does', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('IncrementalF1');
-  await expect(page.getByTestId('money')).toHaveText('€0.00');
+  await expect(page.getByTestId('xp')).toHaveText('0.00 XP');
   await expect(page.getByTestId('lap-progress')).toHaveText('0 / 30 m');
 
   // 29 metres round a 30 metre lap: still nothing earned.
   await pedal(page, 29);
   await expect(page.getByTestId('lap-progress')).toHaveText('29 / 30 m');
-  await expect(page.getByTestId('money')).toHaveText('€0.00');
+  await expect(page.getByTestId('xp')).toHaveText('0.00 XP');
 
-  // The thirtieth tap crosses the line.
+  // The thirtieth tap crosses the line, and the lap is worth its metres.
   await pedal(page, 1);
-  await expect(page.getByTestId('money')).toHaveText('€5.00');
+  await expect(page.getByTestId('xp')).toHaveText('30.00 XP');
   await expect(page.getByTestId('lap-progress')).toHaveText('0 / 30 m');
   await expect(page.getByTestId('track-map')).toContainText('Laps 1');
 });
 
-test('auto-pedal keeps the bike moving without tapping', async ({ page }) => {
+test('the shed starts with one upgrade and opens up as laps land', async ({ page }) => {
   await page.goto('/');
-  const buy = page.getByRole('button', { name: /^Buy Auto-pedal/ });
+  // Bigger gears is the only thing on show in an empty backyard.
+  await expect(page.getByTestId('upgrade-biggerGears')).toBeVisible();
+  await expect(page.getByTestId('upgrade-autoPedal')).toHaveCount(0);
+  await expect(page.getByTestId('upgrade-betterBike')).toHaveCount(0);
+  await expect(page.getByTestId('next-unlock')).toHaveText('Unlocked at 1 lap driven');
+
+  // One lap brings out auto-pedal, and points at the next reveal.
+  await pedal(page, 30);
+  await expect(page.getByTestId('upgrade-autoPedal')).toBeVisible();
+  await expect(page.getByTestId('upgrade-betterBike')).toHaveCount(0);
+  await expect(page.getByTestId('next-unlock')).toHaveText('Unlocked at 3 laps driven');
+
+  // Three laps brings out the tyres.
+  await pedal(page, 60);
+  await expect(page.getByTestId('upgrade-betterBike')).toBeVisible();
+  await expect(page.getByTestId('next-unlock')).toHaveText('Unlocked at 10 laps driven');
+});
+
+test('bigger gears is the first upgrade and makes every tap carry further', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByTestId('pedal-hint')).toHaveText('+1 m per tap');
+  const buy = page.getByRole('button', { name: /^Buy Bigger gears/ });
   await expect(buy).toBeDisabled();
 
-  // Two laps buys the first level.
-  await pedal(page, 60);
-  await expect(page.getByTestId('money')).toHaveText('€10.00');
+  // One lap = 30 XP, and gears cost 25.
+  await pedal(page, 30);
+  await expect(page.getByTestId('xp')).toHaveText('30.00 XP');
+  await expect(buy).toBeEnabled();
+
+  await buy.click();
+  await expect(page.getByTestId('xp')).toHaveText('5.00 XP');
+  await expect(page.getByTestId('pedal-hint')).toHaveText('+2 m per tap');
+  // The row keeps up with what the upgrade is now worth.
+  await expect(page.getByTestId('upgrade-biggerGears').getByTestId('effect-now')).toHaveText(
+    '2 m per tap',
+  );
+
+  // Fifteen taps of 2 m now finish the 30 m lap.
+  await pedal(page, 14);
+  await expect(page.getByTestId('lap-progress')).toHaveText('28 / 30 m');
+  await pedal(page, 1);
+  await expect(page.getByTestId('xp')).toHaveText('35.00 XP');
+});
+
+test('auto-pedal keeps the bike moving without tapping', async ({ page }) => {
+  await page.goto('/');
+
+  // Three laps: one to reveal auto-pedal, three to afford its 90 XP.
+  await pedal(page, 90);
+  await expect(page.getByTestId('xp')).toHaveText('90.00 XP');
+  const buy = page.getByRole('button', { name: /^Buy Auto-pedal/ });
   await expect(buy).toBeEnabled();
 
   await buy.click();
   await expect(page.getByTestId('upgrade-autoPedal').getByTestId('level')).toHaveText('Lvl 1');
-  await expect(page.getByTestId('money')).toHaveText('€0.00');
-  // 0.5 m/s round a 30 m lap at EUR 5 a lap.
-  await expect(page.getByTestId('rate')).toHaveText('+0.08/s');
+  await expect(page.getByTestId('xp')).toHaveText('0.00 XP');
+  // 0.5 m/s at 1 XP a metre.
+  await expect(page.getByTestId('rate')).toHaveText('+0.50/s');
 
   // Without touching the pedals, the bike covers ground on its own.
   await expect
@@ -51,22 +96,23 @@ test('auto-pedal keeps the bike moving without tapping', async ({ page }) => {
 
 test('racing tyres make every later lap worth more', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByTestId('lap-payout')).toHaveText('€5.00');
+  await expect(page.getByTestId('lap-payout')).toHaveText('30.00 XP');
 
-  // Five laps = EUR 25 = the first level of tyres.
+  // Five laps = 150 XP = the first level of tyres, revealed at three laps.
   await pedal(page, 150);
-  await expect(page.getByTestId('money')).toHaveText('€25.00');
+  await expect(page.getByTestId('xp')).toHaveText('150.00 XP');
   await page.getByRole('button', { name: /^Buy Racing tyres/ }).click();
-  await expect(page.getByTestId('lap-payout')).toHaveText('€7.50');
+  await expect(page.getByTestId('xp')).toHaveText('0.00 XP');
+  await expect(page.getByTestId('lap-payout')).toHaveText('45.00 XP');
 
   await pedal(page, 30);
-  await expect(page.getByTestId('money')).toHaveText('€7.50');
+  await expect(page.getByTestId('xp')).toHaveText('45.00 XP');
 });
 
 test('progress survives a reload', async ({ page }) => {
   await page.goto('/');
   await pedal(page, 33);
-  await expect(page.getByTestId('money')).toHaveText('€5.00');
+  await expect(page.getByTestId('xp')).toHaveText('30.00 XP');
   await expect(page.getByTestId('lap-progress')).toHaveText('3 / 30 m');
 
   // Hiding the tab triggers a save.
@@ -77,6 +123,26 @@ test('progress survives a reload', async ({ page }) => {
   await expect(page.getByTestId('saved')).not.toHaveText(/not yet/);
 
   await page.reload();
-  await expect(page.getByTestId('money')).toHaveText('€5.00');
+  await expect(page.getByTestId('xp')).toHaveText('30.00 XP');
   await expect(page.getByTestId('lap-progress')).toHaveText('3 / 30 m');
+});
+
+test('an upgrade shows its description on hover, and not otherwise', async ({ page }) => {
+  await page.goto('/');
+  const gears = page.getByTestId('upgrade-biggerGears');
+  const tooltip = gears.getByTestId('info');
+
+  // The row shows what it is worth now, the button what one more level adds,
+  // and only the description waits behind the icon.
+  await expect(gears.getByTestId('effect-now')).toHaveText('1 m per tap');
+  await expect(gears.getByTestId('delta')).toHaveText('+1 m');
+  await expect(tooltip).toBeHidden();
+
+  await gears.getByTestId('info-toggle').hover();
+  await expect(tooltip).toBeVisible();
+  await expect(tooltip).toHaveText('A longer chainring. Every push of the pedals travels further.');
+
+  // Moving away hides it again.
+  await page.getByRole('heading', { level: 1 }).hover();
+  await expect(tooltip).toBeHidden();
 });

@@ -21,6 +21,7 @@ export function formatNumber(value: Decimal | number): string {
   return `${scaled.toFixed(2)}${suffix}`;
 }
 
-export function formatMoney(value: Decimal | number): string {
-  return `€${formatNumber(value)}`;
+/** An XP amount, e.g. "30.00 XP" or "1.23K XP". Money gets its own formatter at M3. */
+export function formatXp(value: Decimal | number): string {
+  return `${formatNumber(value)} XP`;
 }

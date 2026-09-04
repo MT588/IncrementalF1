@@ -3,14 +3,16 @@ import type { GameState } from '../types';
 import { getTrack, isTrackId } from '../data/tracks';
 import { UPGRADE_IDS } from '../data/upgrades';
 import type { UpgradeId } from '../data/upgrades';
+import { parseAmount } from './amount';
 import { LATEST_SAVE_VERSION, migrate } from './migrate';
 
 export const SAVE_VERSION = LATEST_SAVE_VERSION;
 
-export interface SaveFileV2 {
-  version: 2;
+export interface SaveFileV3 {
+  version: 3;
   savedAt: number;
   state: {
+    xp: string;
     money: string;
     trackId: string;
     lapProgressM: number;
@@ -22,11 +24,13 @@ export interface SaveFileV2 {
   };
 }
 
-export function toSave(state: GameState, savedAt: number): SaveFileV2 {
+export function toSave(state: GameState, savedAt: number): SaveFileV3 {
   return {
-    version: 2,
+    // Keep in step with LATEST_SAVE_VERSION and the interface above.
+    version: 3,
     savedAt,
     state: {
+      xp: state.xp.toString(),
       money: state.money.toString(),
       trackId: state.trackId,
       lapProgressM: state.lapProgressM,
@@ -46,7 +50,7 @@ export function serialize(state: GameState, savedAt: number): string {
 /**
  * Parse a save, migrating older versions first. Returns null for anything that is
  * not a well-formed save of a known version, so callers never overwrite a good
- * save with garbage.
+ * save with garbage. Never throws: every Decimal comes from `parseAmount`.
  */
 export function fromSave(raw: unknown): GameState | null {
   if (!isRecord(raw)) return null;
@@ -55,14 +59,17 @@ export function fromSave(raw: unknown): GameState | null {
 
   const s = migrated.state;
   if (!isRecord(s)) return null;
-  if (typeof s.money !== 'string') return null;
   if (!isTrackId(s.trackId)) return null;
   if (!isFiniteNumber(s.lastTickAt) || !isFiniteNumber(s.createdAt)) return null;
   if (!isCount(s.totalLaps) || !isFiniteNumber(s.totalTapsM) || s.totalTapsM < 0) return null;
   if (!isFiniteNumber(s.lapProgressM) || s.lapProgressM < 0) return null;
   if (!isRecord(s.upgrades)) return null;
 
-  const money = parseMoney(s.money);
+  const xp = parseAmount(s.xp);
+  if (!xp) return null;
+  // Money has no earner yet, so an absent field is normal rather than corrupt —
+  // same tolerance as a missing upgrade level. A malformed one is still refused.
+  const money = s.money === undefined ? new Decimal(0) : parseAmount(s.money);
   if (!money) return null;
 
   const upgrades = {} as Record<UpgradeId, number>;
@@ -78,6 +85,7 @@ export function fromSave(raw: unknown): GameState | null {
   }
 
   return {
+    xp,
     money,
     trackId: s.trackId,
     // A shorter track (or a hand-edited save) must not leave the bike past the line.
@@ -104,17 +112,6 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function isFiniteNumber(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
-}
-
-/** break_infinity throws on unparseable input, and fromSave must never throw. */
-function parseMoney(raw: string): Decimal | null {
-  let money: Decimal;
-  try {
-    money = new Decimal(raw);
-  } catch {
-    return null;
-  }
-  return Number.isFinite(money.mantissa) && money.gte(0) ? money : null;
 }
 
 /** A non-negative whole number: lap counts and upgrade levels. */

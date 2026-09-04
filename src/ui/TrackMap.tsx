@@ -1,8 +1,8 @@
 import { getTrack } from '@/engine/data/tracks';
 import { STRINGS } from '@/engine/data/strings';
-import { moneyPerLap } from '@/engine/formulas';
+import { xpPerLap } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
-import { formatMoney } from '@/util/formatNumber';
+import { formatXp } from '@/util/formatNumber';
 import { pointOnCircle } from '@/util/pointOnCircle';
 
 // viewBox units. A circle keeps both the progress ring (2πr) and the dot
@@ -101,7 +101,7 @@ export function TrackMap() {
         <p className="text-ink-muted">
           {STRINGS.LAP_PAYS}{' '}
           <span className="text-ink" data-testid="lap-payout">
-            {formatMoney(moneyPerLap(state))}
+            {formatXp(xpPerLap(state))}
           </span>
         </p>
       </div>

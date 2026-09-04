@@ -1,27 +1,68 @@
 import type { UpgradeDef } from '../types';
 
-export type UpgradeId = 'autoPedal' | 'betterBike';
+export type UpgradeId =
+  | 'biggerGears'
+  | 'autoPedal'
+  | 'betterBike'
+  | 'slipstream'
+  | 'trainingPartner';
 
 /**
  * Every upgrade is repeatable: cost grows per level, the effect stacks.
  * Effects are data (see UpgradeEffect) so formulas.ts stays a switch over this list.
+ *
+ * Listed in the order they open up, which is also cheapest first. `unlockAtLaps`
+ * keeps the shed short at the start: an upgrade is hidden until that many laps
+ * have been completed, so the player meets one new thing at a time.
  */
 export const UPGRADES: readonly UpgradeDef[] = [
+  {
+    id: 'biggerGears',
+    name: 'Bigger gears',
+    description: 'A longer chainring. Every push of the pedals travels further.',
+    // The first upgrade, so deliberately below one lap of the starting track
+    // (30 m × 1 XP/m): it is affordable the moment that first lap completes.
+    // A shorter starting track or a lower xpPerMetre would quietly break that.
+    baseCost: 25,
+    growth: 1.9,
+    unlockAtLaps: 0,
+    effect: { kind: 'tapMetres', perLevel: 1 },
+  },
   {
     id: 'autoPedal',
     name: 'Auto-pedal',
     description: 'Your legs keep turning on their own. Slowly.',
-    baseCost: 10,
+    baseCost: 90,
     growth: 1.15,
+    unlockAtLaps: 1,
     effect: { kind: 'speed', perLevel: 0.5 },
   },
   {
     id: 'betterBike',
     name: 'Racing tyres',
     description: 'Grippier rubber. Every finished lap pays more.',
-    baseCost: 25,
+    baseCost: 150,
     growth: 1.6,
-    effect: { kind: 'payout', perLevel: 1.5 },
+    unlockAtLaps: 3,
+    effect: { kind: 'xpMult', perLevel: 1.5 },
+  },
+  {
+    id: 'slipstream',
+    name: 'Slipstream',
+    description: 'Tuck in behind the neighbour. Everything that rolls, rolls faster.',
+    baseCost: 900,
+    growth: 2.2,
+    unlockAtLaps: 10,
+    effect: { kind: 'speedMult', perLevel: 1.2 },
+  },
+  {
+    id: 'trainingPartner',
+    name: 'Training partner',
+    description: 'Someone else pushes the pedals for you — with your gears on.',
+    baseCost: 2400,
+    growth: 1.5,
+    unlockAtLaps: 20,
+    effect: { kind: 'autoTaps', perLevel: 0.5 },
   },
 ];
 
