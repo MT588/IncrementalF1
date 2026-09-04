@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // Starts the dev server first, then opens a debuggable browser on it.
+      // Breakpoints in src/ work directly thanks to Vite's source maps.
+      "name": "Run the game",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "dev server",
+      "sourceMaps": true
+    },
+    {
+      // Use when `pnpm dev` is already running in a terminal.
+      "name": "Open the game (server already running)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:5173",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true
+    }
+  ]
+}

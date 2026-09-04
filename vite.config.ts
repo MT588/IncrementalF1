@@ -10,6 +10,12 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  server: {
+    // Pinned so the URL in .vscode/launch.json and the README is always right.
+    // Without strictPort, Vite silently moves to 5174 when 5173 is taken.
+    port: 5173,
+    strictPort: true,
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],

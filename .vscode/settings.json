@@ -1,0 +1,28 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+
+  // Use the TypeScript from node_modules, not the editor's bundled one, so the
+  // editor and `pnpm typecheck` always agree.
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+
+  // Tailwind 4 keeps its config in CSS (@theme, @import 'tailwindcss'), which the
+  // built-in CSS language service does not know about. Without this, styles.css
+  // shows phantom "Unknown at rule" errors.
+  "css.lint.unknownAtRules": "ignore",
+  "tailwindCSS.experimental.configFile": "src/styles.css",
+
+  "search.exclude": {
+    "**/dist": true,
+    "**/node_modules": true,
+    "**/playwright-report": true,
+    "**/test-results": true,
+    "**/pnpm-lock.yaml": true
+  },
+  "files.eol": "\n"
+}

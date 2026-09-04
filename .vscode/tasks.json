@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "dev server",
+      "type": "shell",
+      "command": "pnpm dev",
+      "isBackground": true,
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      // Vite is a long-running process, so the task must report "done" when the
+      // server is ready rather than when the command exits.
+      "problemMatcher": {
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".*VITE.*",
+          "endsPattern": ".*ready in.*"
+        }
+      }
+    },
+    {
+      "label": "test (watch)",
+      "type": "shell",
+      "command": "pnpm test:watch",
+      "isBackground": true,
+      "group": "test",
+      "presentation": { "reveal": "always", "panel": "dedicated" },
+      "problemMatcher": []
+    },
+    {
+      "label": "check (lint, format, types, tests)",
+      "type": "shell",
+      "command": "pnpm check",
+      "group": "test",
+      "problemMatcher": ["$tsc", "$eslint-stylish"]
+    }
+  ]
+}
