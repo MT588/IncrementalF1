@@ -3,6 +3,7 @@ import { nextUnlockAtLaps, unlockedUpgrades } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 import { Footer } from './Footer';
 import { Header } from './Header';
+import { RacesPanel } from './RacesPanel';
 import { TrackMap } from './TrackMap';
 import { UpgradeRow } from './UpgradeRow';
 import { WelcomeBack } from './WelcomeBack';
@@ -38,6 +39,7 @@ export function App() {
             </p>
           )}
         </section>
+        <RacesPanel />
       </main>
       <Footer />
       <p className="text-ink-muted mt-4 text-center text-xs">{STRINGS.TAGLINE}</p>

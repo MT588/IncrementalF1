@@ -125,6 +125,19 @@ describe('save round trip', () => {
     expect(fromSave(save)?.upgrades.throttle).toBe(0);
   });
 
+  it('takes a save written before race craft existed', () => {
+    // A new upgrade needs no migration: the save shape did not change, and an
+    // absent level is already read as nought.
+    const save = base();
+    save.state.upgrades = { throttle: 4, racingTyres: 2 };
+    const back = fromSave(save);
+    expect(back).not.toBeNull();
+    expect(back!.upgrades.raceCraft).toBe(0);
+    expect(back!.upgrades.throttle).toBe(4);
+    // Still version 6: nothing stored needed converting.
+    expect(toSave(back!, 0).version).toBe(6);
+  });
+
   it('tolerates a missing money field, which has no earner yet', () => {
     const save = base();
     delete (save.state as Partial<typeof save.state>).money;
@@ -181,7 +194,8 @@ describe('migration', () => {
   it('maps the bicycle upgrades onto the kart, and drops the rest', () => {
     const back = fromSave(v5Save);
     expect(back).not.toBeNull();
-    // Auto-pedal and the throttle are both +0.5 m/s, so the level carries over.
+    // Auto-pedal was the bike's first speed upgrade and the throttle is the
+    // kart's, so the level carries over.
     expect(back!.upgrades.throttle).toBe(3);
     expect(back!.upgrades.racingTyres).toBe(1);
     expect(back!.upgrades.slipstream).toBe(2);
@@ -190,6 +204,7 @@ describe('migration', () => {
     expect(back!.upgrades.biggerEngine).toBe(0);
     expect(Object.keys(back!.upgrades).sort()).toEqual([
       'biggerEngine',
+      'raceCraft',
       'racingTyres',
       'slipstream',
       'throttle',

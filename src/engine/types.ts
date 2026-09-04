@@ -51,8 +51,10 @@ export interface TrackDef {
 
 /** What one level of an upgrade does. Add a kind here and handle it in formulas.ts. */
 export type UpgradeEffect =
-  /** Adds metres per second to the kart's speed. */
+  /** Adds km/h to the kart's speed. */
   | { kind: 'speed'; perLevel: number }
+  /** Adds a flat number of XP to every completed lap, before any xpMult. */
+  | { kind: 'xpFlat'; perLevel: number }
   /** Multiplies the XP earned per completed lap. */
   | { kind: 'xpMult'; perLevel: number }
   /** Multiplies the whole speed, however that speed was earned. */

@@ -1,6 +1,6 @@
 import { getTrack } from '@/engine/data/tracks';
 import { STRINGS, speedHint } from '@/engine/data/strings';
-import { speedMps, xpPerLap } from '@/engine/formulas';
+import { speedKph, xpPerLap } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 import { formatXp } from '@/util/formatNumber';
 import { perimeter, pointOnStadium } from '@/util/stadium';
@@ -23,7 +23,7 @@ const SETTLED_M = 0.01;
 export function TrackMap() {
   const state = useGameStore((s) => s.state);
   const track = getTrack(state.trackId);
-  const speed = speedMps(state);
+  const speed = speedKph(state);
 
   // Lifetime metres rather than metres into the lap: a value that resets at the
   // line would drag the kart backwards across the yard on every rollover.

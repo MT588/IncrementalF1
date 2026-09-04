@@ -1,6 +1,9 @@
 import Decimal from 'break_infinity.js';
 import { describe, expect, it } from 'vitest';
 import { buyUpgrade, canAfford } from './actions';
+import { RACE_UNLOCK_LAPS } from './data/races';
+import { getUpgrade } from './data/upgrades';
+import { lapsToRaces } from './formulas';
 import { createInitialState } from './state';
 import { tick } from './tick';
 
@@ -63,15 +66,26 @@ describe('buyUpgrade', () => {
 });
 
 describe('pacing', () => {
-  it('reaches the throttle, the first upgrade, ten seconds in', () => {
+  it('reaches the throttle, the first upgrade, about fifteen seconds in', () => {
     let state = createInitialState(0);
     let seconds = 0;
     while (!canAfford(state, 'throttle') && seconds < 600) {
       state = tick(state, 1);
       seconds++;
     }
-    // One lap of the backyard loop at the kart's own speed, with no input at all.
-    expect(seconds).toBe(10);
+    // One lap of the backyard loop at the kart's own 2.4 km/h, with no input at
+    // all. A second either side of fifteen: ticking a second at a time
+    // accumulates a hair less distance than one fifteen-second tick would, and
+    // the lap can land on either side of that hair.
+    expect(seconds).toBeGreaterThanOrEqual(15);
+    expect(seconds).toBeLessThanOrEqual(16);
     expect(state.totalLaps).toBe(1);
+  });
+
+  it('opens races a long way past the last upgrade', () => {
+    // Race craft is revealed at 20 laps and races want 250, so the panel it
+    // puts on screen is a goal rather than a formality.
+    expect(lapsToRaces(0)).toBe(RACE_UNLOCK_LAPS);
+    expect(getUpgrade('raceCraft').unlockAtLaps).toBeLessThan(RACE_UNLOCK_LAPS);
   });
 });

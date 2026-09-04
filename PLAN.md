@@ -1,7 +1,7 @@
 # IncrementalF1 — Project Plan
 
 A browser-based incremental (idle) game about driving your way from a go-kart in
-the backyard to a Formula 1 team. You start in a kart doing a metre a second
+the backyard to a Formula 1 team. You start in a kart pottering at 2.4 km/h
 round a ten-metre loop, with nothing to press: **XP only arrives when you
 complete a lap**. XP buys upgrades that make the kart faster and each lap worth
 more, then longer tracks, bigger engines and eventually a single-seater. Prize
@@ -38,8 +38,8 @@ an attentive one earn exactly the same.
 Nothing is clicked because nothing should have to be. An incremental game whose
 opening move is thirty clicks asks for attention it has not earned yet, and the
 upgrades that then exist to make clicking better — bigger gears, an auto-clicker
-— are a ladder built on top of a chore. Starting at a metre a second cuts all of
-that and leaves the real decision: which upgrade next.
+— are a ladder built on top of a chore. Starting the kart already rolling cuts
+all of that and leaves the real decision: which upgrade next.
 
 ### 1.2 Resources
 
@@ -60,8 +60,8 @@ what lets a race be worth something no amount of driving can buy.
 A **track** is a distance and an XP rate. The backyard loop is 10 m at 1/10 XP a
 metre, so a lap pays exactly 1 XP; adding one is a data row, not code. Pricing a
 lap at 1 XP is what lets every cost in the shed be read as a count of laps, and
-ten metres is what puts the first of those laps ten seconds after the page
-loads.
+at the kart's starting 2.4 km/h ten metres is fifteen seconds — one lap, one XP,
+and the shed's first purchase.
 
 **A lap always pays a whole number of XP.** `xpPerLap` rounds the multiplied
 payout up, because the game shows no fractions anywhere: left alone, a ×1.5 on
@@ -79,27 +79,42 @@ Every **upgrade** is repeatable — cost grows per level, the effect stacks:
 
 ```
 cost(n) = max(round(baseCost × growth^n), baseCost + n)   growth ≈ 1.07–2.2
-effect:   { kind: 'speed',     perLevel }   +m/s on the kart's speed
+effect:   { kind: 'speed',     perLevel }   +km/h on the kart's speed
+          { kind: 'xpFlat',    perLevel }   +XP on every completed lap
           { kind: 'xpMult',    perLevel }   ×XP per completed lap
           { kind: 'speedMult', perLevel }   ×the whole speed, base included
 ```
 
-Three kinds, and every one of them is legible on the two numbers under the
+Four kinds in two pairs — one additive and one multiplicative for each of speed
+and payout — and every one of them is legible on the two numbers under the
 track: how fast the kart is going, and what a lap pays.
+
+**Speed is expressed in km/h**, in the data and on screen, and turned into metres
+per second only where the simulation needs them. A kart is a vehicle: 2.4 km/h is
+a recognisable potter and 42 km/h is a recognisable kart, where 0.67 m/s is a
+number nobody has an instinct for.
+
+**Growth belongs to the payout, not to the speed.** Speed reads on screen, so it
+has to stay believable for a machine in a garden; a lap's worth has no such
+ceiling. The speed upgrades are therefore modest and steeply priced, while the
+tyres and race craft carry the exponential. Over the ten minutes to the race
+unlock the kart goes 2.4 → 42 km/h, which is a real karting progression, while a
+lap goes from 1 XP to about a hundred.
 
 **A price is a whole number of XP too**, and no two rungs are ever the same
 price. Rounding the curve alone would not manage that: a shallow growth on a
-small base steps by less than an XP at first — auto-pedal's 1.15 on a base of 3
-goes 3, 3.45, 3.97, 4.56 — and would quote 3, 3, 4, 5. Hence the `baseCost + n`
+small base steps by less than an XP at first — the throttle's 1.45 on a base of 1
+goes 1, 1.45, 2.1, 3.05 — and would quote 1, 1, 2, 3. Hence the `baseCost + n`
 floor: every level costs at least one XP more than the one below it. It bites
 only while the curve is flatter than an XP a level, and the geometric term
 overtakes it once and never falls back, so the two are one rising ladder.
 
 ```
-  throttle       1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 18, 23, 30, 39
-  racing tyres   5, 8, 13, 20, 33, 52, 84, 134, 215
-  bigger engine  12, 20, 35, 59, 100, 170, 290, 492
-  slipstream     30, 66, 145, 319, 703, 1546
+  throttle       1, 2, 3, 4, 5, 6, 9, 13, 20, 28, 41, 60
+  racing tyres   3, 4, 5, 7, 10, 13, 18, 25, 33, 45, 60, 81
+  bigger engine  10, 19, 36, 69, 130, 248, 470, 894
+  slipstream     25, 75, 225, 675, 2025, 6075
+  race craft     50, 110, 242, 532, 1171, 2577
 ```
 
 Upgrades are also **revealed by laps driven**, not all at once: each one carries
@@ -111,23 +126,30 @@ to something they did.
 
 Ladder (early → late), with the lap each one appears at:
 
-1. **Throttle** – +0.5 m/s. The first upgrade, and the cheapest. _0 laps, M1.7_
-2. **Racing tyres** – every finished lap pays more. _3 laps, M1.7_
-3. **Bigger engine** – +2 m/s, a proper step rather than a nudge. _8 laps, M1.7_
+1. **Throttle** – +0.5 km/h. The first upgrade, and the cheapest. _0 laps, M1.7_
+2. **Racing tyres** – +1 XP on every finished lap. _3 laps, M1.8_
+3. **Bigger engine** – +2 km/h, a proper step rather than a nudge. _8 laps, M1.7_
 4. **Slipstream** – multiplies the whole speed, base included. _15 laps, M1.7_
-5. **Longer tracks** – the car park, the local kart circuit.
-6. **Bigger engine classes, then a junior single-seater** – large jumps in m/s
+5. **Race craft** – ×1.5 XP a lap, and it puts races on the board. _20 laps, M1.8_
+6. **Longer tracks** – the car park, the local kart circuit.
+7. **Bigger engine classes, then a junior single-seater** – large jumps in speed
    and payout.
-7. **Mechanic / test driver** – staff who drive laps for you.
-8. **Wind tunnel, simulator** – produce RP.
-9. **Second car** – doubles everything, very expensive.
-10. **Factory** – global multiplier, late game.
+8. **Mechanic / test driver** – staff who drive laps for you.
+9. **Wind tunnel, simulator** – produce RP.
+10. **Second car** – doubles everything, very expensive.
+11. **Factory** – global multiplier, late game.
 
 ### 1.4 Races and seasons
 
 Races are specified in a plan of their own; what matters here is that a kart is
 already a racing machine, so they are meant to open **during the backyard era**
 rather than waiting on a car.
+
+**Races unlock at 250 laps driven** (`RACE_UNLOCK_LAPS`), which greedy play
+reaches in about ten minutes. Buying **race craft** — the last upgrade the yard
+has to teach — reveals a panel under the shed that counts those laps down, so
+the goal is on screen well before it is reachable, and it is a lap count rather
+than a price because it should be something the player drove to, not bought.
 
 - A **race** is a timed event (e.g. every 5 minutes of real time, or when a lap
   counter hits a target). Your lap speed vs. an AI field of bots determines
@@ -140,15 +162,17 @@ rather than waiting on a car.
 
 ### 1.5 Progression pacing (targets)
 
-| Milestone                      | Target time   |
-| ------------------------------ | ------------- |
-| First lap (10 m at 1 m/s)      | 10 seconds    |
-| First upgrade (throttle)       | on that lap   |
-| Second track unlocked          | ~5 minutes    |
-| First race                     | ~5 minutes    |
-| First prestige                 | 30–60 minutes |
-| Automation unlocked (auto-buy) | 2nd prestige  |
-| "Endgame" content              | 20+ hours     |
+| Milestone                       | Target time   |
+| ------------------------------- | ------------- |
+| First lap (10 m at 2.4 km/h)    | 15 seconds    |
+| First upgrade (throttle)        | on that lap   |
+| Race craft, and the races panel | ~6 minutes    |
+| Races unlocked (250 laps)       | ~10 minutes   |
+| Second track unlocked           | ~5 minutes    |
+| First race                      | ~5 minutes    |
+| First prestige                  | 30–60 minutes |
+| Automation unlocked (auto-buy)  | 2nd prestige  |
+| "Endgame" content               | 20+ hours     |
 
 ### 1.6 Offline progress
 
@@ -738,13 +762,40 @@ moment the page loads**, so all of that went:
 - 91 Vitest unit tests, 6 Playwright e2e tests. The e2e suite seeds a save
   through `localStorage` instead of clicking laps out in real time.
 
-### M1.8 — The rest of the ladder (next)
+### M1.8 — Growth moves to the payout, and races get a signpost — done
+
+Status: shipped. M1.7's economy grew mostly through **speed**, and speed is the
+one number on screen that has to stay believable: a greedy player had the
+backyard kart doing 180 km/h inside half an hour. The exponential moved onto
+**what a lap is worth**, which has no such ceiling.
+
+- **Speed is km/h**, in the data and on screen. `speedKph` is the readout and the
+  unit every speed upgrade is written in; `speedMps` is a thin divide by 3.6 for
+  the simulation. 2.4 km/h is a recognisable potter where 0.67 m/s is nothing.
+- **The kart starts at 2.4 km/h**, so a lap of the yard takes fifteen seconds
+  rather than ten, and the speed upgrades are modest and steeply priced. The arc
+  to the race unlock runs 2.4 → 42 km/h, which is a real karting progression.
+- **Racing tyres pay flat**, +1 XP a lap per level, through a new `xpFlat` effect
+  kind. They are bought when a lap pays 1 XP, and a ×1.5 there is worth half an
+  XP that the ceiling rounds away; +1 is the payout over again and lands visibly.
+- **Race craft** (×1.5 XP a lap, 50 XP, 20 laps) is slipstream's opposite number
+  and carries the late growth. `xpPerLap` became
+  `ceil((1 + Σ xpFlat) × Π xpMult)` — the same additive-then-multiply shape
+  `speedKph` already had, so tyres make every level of race craft worth more.
+- **Races unlock at 250 laps** (`engine/data/races.ts`), about ten minutes in.
+  Buying race craft reveals `ui/RacesPanel.tsx` under the shed, counting the laps
+  down. It says outright that races are still coming, because they are.
+- No save change: `raceCraft` is a new id that `fromSave` already reads as nought
+  when absent, and nothing stored needed converting. Still v6.
+- 102 Vitest unit tests, 8 Playwright e2e tests.
+
+### M1.9 — The rest of the ladder (next)
 
 - More tracks (the car park, the local kart circuit).
 - Export/import save string, settings, number-notation option.
 - Offline-progress notice tuned for lap counts rather than an XP total.
 
-### M1.9 — First prestige (completes the MVP)
+### M1.10 — First prestige (completes the MVP)
 
 - A prestige unlock condition that does not need races yet (total laps or a
   XP threshold — **open decision**).
@@ -765,7 +816,7 @@ moment the page loads**, so all of that went:
 - Race simulation vs an AI field of bots, reputation, sponsors. Specified in a
   plan of its own; the kart is meant to be racing well before it is replaced.
 - Season of 20 races, which becomes the prestige trigger in place of the
-  simpler M1.9 condition; Championship points shop.
+  simpler M1.10 condition; Championship points shop.
 - Automation upgrades; achievements.
 - Balance pass using simulation tests. PWA.
 

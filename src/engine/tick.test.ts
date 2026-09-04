@@ -45,19 +45,19 @@ describe('addDistance', () => {
 });
 
 describe('tick', () => {
-  it('drives a lap in ten seconds with nothing bought at all', () => {
-    // The kart moves from the first second: 1 m/s round a 10 m lap.
-    const after = tick(createInitialState(0), 10);
+  it('drives a lap in fifteen seconds with nothing bought at all', () => {
+    // The kart moves from the first second: 2.4 km/h round a 10 m lap.
+    const after = tick(createInitialState(0), 15);
     expect(after.totalLaps).toBe(1);
     expect(after.lapProgressM).toBeCloseTo(0, 9);
     expect(after.xp.toNumber()).toBe(1);
   });
 
   it('covers speed x dt, and the throttle makes that further', () => {
-    // 1.5 m/s for ten seconds: a lap and half of the next.
-    const after = tick(withLevels({ throttle: 1 }), 10);
+    // 2.9 km/h for fifteen seconds: a lap, and a couple of metres of the next.
+    const after = tick(withLevels({ throttle: 1 }), 15);
     expect(after.totalLaps).toBe(1);
-    expect(after.lapProgressM).toBeCloseTo(5, 9);
+    expect(after.lapProgressM).toBeCloseTo((2.9 / 3.6) * 15 - 10, 9);
     expect(after.xp.toNumber()).toBe(1);
   });
 
@@ -69,12 +69,12 @@ describe('tick', () => {
 
 describe('advanceTo', () => {
   it('simulates the elapsed gap and stamps lastTickAt', () => {
-    // 121 s at 1 m/s = 121 m = twelve laps with a metre left over.
+    // 121 s at 2.4 km/h = 80.67 m = eight laps with two thirds of a metre over.
     const { state, simulatedSeconds } = advanceTo(createInitialState(1000), 122_000);
     expect(simulatedSeconds).toBe(121);
-    expect(state.totalLaps).toBe(12);
-    expect(state.xp.toNumber()).toBe(12);
-    expect(state.lapProgressM).toBeCloseTo(1, 9);
+    expect(state.totalLaps).toBe(8);
+    expect(state.xp.toNumber()).toBe(8);
+    expect(state.lapProgressM).toBeCloseTo(2 / 3, 9);
     expect(state.lastTickAt).toBe(122_000);
   });
 
@@ -82,10 +82,10 @@ describe('advanceTo', () => {
     const dayLater = 24 * 60 * 60 * 1000;
     const { state, simulatedSeconds } = advanceTo(createInitialState(0), dayLater);
     expect(simulatedSeconds).toBe(MAX_CATCH_UP_SECONDS);
-    // 8 h at 1 m/s = 28800 m = 2880 laps of 10 m, and a lap pays 1 XP with
+    // 8 h at 2.4 km/h = 19200 m = 1920 laps of 10 m, and a lap pays 1 XP with
     // nothing bought to multiply it.
-    expect(state.totalLaps).toBe(2880);
-    expect(state.xp.toNumber()).toBe(2880);
+    expect(state.totalLaps).toBe(1920);
+    expect(state.xp.toNumber()).toBe(1920);
     // Money has no earner until races: driving must never produce any.
     expect(state.money.toNumber()).toBe(0);
     expect(state.lastTickAt).toBe(dayLater);

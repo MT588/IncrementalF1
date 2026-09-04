@@ -101,8 +101,8 @@ const RENAMED_UPGRADES: readonly (readonly [string, string])[] = [
  * upgrades that existed to make one worth pressing.
  *
  * Levels carry across one for one wherever the new ladder has an equivalent —
- * auto-pedal and the throttle are both +0.5 m/s, the tyres are the same
- * multiplier under a new id, and slipstream never changed. Bigger gears and the
+ * auto-pedal was the bike's first speed upgrade and the throttle is the kart's,
+ * the tyres kept their name, and slipstream never changed. Bigger gears and the
  * training partner have nothing to convert into and are dropped, as v1's
  * mechanics were. `totalClicksM` goes with them: nothing clicks any more.
  */

@@ -2,13 +2,19 @@ import Decimal from 'break_infinity.js';
 import type { GameState, UpgradeDef } from './types';
 import { getTrack } from './data/tracks';
 import { UPGRADES } from './data/upgrades';
+import { RACE_UNLOCK_LAPS } from './data/races';
 
 /**
- * Metres per second the kart covers with nothing bought at all. The game has no
- * manual action: this is what makes it move from the first second, so a lap of
- * the ten-metre backyard lands ten seconds in and the shed is open on the first.
+ * How fast the kart goes with nothing bought at all, in km/h. The game has no
+ * manual action, so this is what makes it move from the first second: a lap of
+ * the ten-metre backyard lands fifteen seconds in and the shed is open on the
+ * first one.
+ *
+ * Speed is km/h in the data and on screen, and metres per second only where the
+ * simulation needs them. A kart is a vehicle and 2.4 km/h is a recognisable
+ * potter; 0.67 m/s is a number nobody has an instinct for.
  */
-export const BASE_SPEED_MPS = 1;
+export const BASE_SPEED_KPH = 2.4;
 
 /**
  * Cost of the next level when `level` levels are already owned. The curve is
@@ -25,8 +31,8 @@ export const BASE_SPEED_MPS = 1;
  * exactly once and never falls back, so the two together are still a single
  * strictly increasing ladder.
  *
- * The throttle comes out 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 18, 23, 30 — linear
- * while the curve is too flat to see, geometric from the moment it is not.
+ * The throttle comes out 1, 2, 3, 4, 5, 6, 9, 13, 20, 28, 41 — linear while the
+ * curve is too flat to see, geometric from the moment it is not.
  */
 export function costOf(def: UpgradeDef, level: number): Decimal {
   const curve = new Decimal(def.baseCost).mul(Decimal.pow(def.growth, level)).round();
@@ -48,42 +54,51 @@ export function bulkCost(def: UpgradeDef, level: number, amount: number): Decima
 }
 
 /**
- * How fast the kart is going, in metres per second. Never zero: it starts at
- * `BASE_SPEED_MPS` and every upgrade only adds to that.
+ * How fast the kart is going, in km/h — the readout, and the unit every speed
+ * upgrade is written in. Never zero: it starts at `BASE_SPEED_KPH` and every
+ * upgrade only adds to that.
  *
  * Additive sources first — the throttle and the engine, both `speed` — then the
  * multipliers apply to that whole total, so a bigger engine makes every later
  * slipstream level worth more rather than the two competing.
  */
-export function speedMps(state: GameState): number {
-  let mps = BASE_SPEED_MPS;
+export function speedKph(state: GameState): number {
+  let kph = BASE_SPEED_KPH;
   let multiplier = 1;
   for (const def of UPGRADES) {
     const level = state.upgrades[def.id];
     if (level === 0) continue;
     switch (def.effect.kind) {
       case 'speed':
-        mps += def.effect.perLevel * level;
+        kph += def.effect.perLevel * level;
         break;
       case 'speedMult':
         multiplier *= def.effect.perLevel ** level;
         break;
+      case 'xpFlat':
       case 'xpMult':
         break;
     }
   }
-  return mps * multiplier;
+  return kph * multiplier;
+}
+
+/** The same speed in the unit the simulation moves in: metres a second. */
+export function speedMps(state: GameState): number {
+  return speedKph(state) / 3.6;
 }
 
 /**
- * XP paid for completing one lap of the current track, with xpMult upgrades applied.
- * Derived from the distance: a lap is worth the metres it takes to drive it.
+ * XP paid for completing one lap of the current track. The track's own payout,
+ * plus every flat bonus, and the whole of that then multiplied — the same shape
+ * as `speedKph`, so the tyres make each level of race craft worth more rather
+ * than the two competing.
  *
  * Rounded up to a whole XP, which is what makes the payout a growth signal at
  * all. A lap of the backyard pays 1, and the game shows no fractions, so a
  * ×1.5 left to itself would pay 1.5 and read as the same 1 XP it paid before —
- * a bought upgrade that looks like it did nothing. Ceiling it instead gives
- * 1, 2, 3, 4, 6, 8, 12: every level lands on a number the player can see change.
+ * a bought upgrade that looks like it did nothing. Ceiling it instead means
+ * every level lands on a number the player can see change.
  *
  * The multipliers still compound on the exact value, so the rounding is applied
  * once at the end and never accumulates into the curve.
@@ -91,12 +106,23 @@ export function speedMps(state: GameState): number {
 export function xpPerLap(state: GameState): Decimal {
   const track = getTrack(state.trackId);
   let xp = new Decimal(track.lapDistanceM).mul(track.xpPerMetre);
+  let multiplier = new Decimal(1);
   for (const def of UPGRADES) {
-    if (def.effect.kind !== 'xpMult') continue;
     const level = state.upgrades[def.id];
-    if (level > 0) xp = xp.mul(Decimal.pow(def.effect.perLevel, level));
+    if (level === 0) continue;
+    switch (def.effect.kind) {
+      case 'xpFlat':
+        xp = xp.add(def.effect.perLevel * level);
+        break;
+      case 'xpMult':
+        multiplier = multiplier.mul(Decimal.pow(def.effect.perLevel, level));
+        break;
+      case 'speed':
+      case 'speedMult':
+        break;
+    }
   }
-  return xp.ceil();
+  return xp.mul(multiplier).ceil();
 }
 
 /**
@@ -114,9 +140,9 @@ export function xpPerSecond(state: GameState): Decimal {
 
 /**
  * XP a minute — the header readout. Per minute rather than per second because
- * nothing on screen is shown as a fraction: the kart starts at 0.1 XP a second,
- * which rounds to "+0/s" and would sit there through the whole early game. Per
- * minute it reads "+6/min" from the moment the page loads.
+ * nothing on screen is shown as a fraction: the kart starts at 0.067 XP a
+ * second, which rounds to "+0/s" and would sit there through the whole early
+ * game. Per minute it reads "+4/min" from the moment the page loads.
  */
 export function xpPerMinute(state: GameState): Decimal {
   return xpPerSecond(state).mul(60);
@@ -149,4 +175,13 @@ export function nextUnlockAtLaps(totalLaps: number): number | null {
     (def) => def.unlockAtLaps,
   );
   return gates.length === 0 ? null : Math.min(...gates);
+}
+
+/**
+ * Laps still to drive before races open, or 0 once the gate is passed. Drives
+ * the countdown in the races panel, which is the one thing on screen that looks
+ * past the backyard.
+ */
+export function lapsToRaces(totalLaps: number): number {
+  return Math.max(0, RACE_UNLOCK_LAPS - totalLaps);
 }
