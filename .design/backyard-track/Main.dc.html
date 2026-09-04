@@ -27,15 +27,22 @@
       <p class="meta">Laps <span style="color: #e9eaec;">7</span></p>
     </div>
 
-    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="The backyard on a sunny day: a dirt loop worn into the mown lawn, the shed standing in the middle of it and the bike partway round the lap.">
+    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="The backyard on a sunny day: a dirt loop worn into the mown lawn, the shed standing in the middle of it, flowers coming up round the edges of the lawn, and the bike partway round the lap.">
 
       <!-- Mown lawn. -->
       <rect x="0" y="0" width="200" height="120" fill="#79a45d"></rect>
       <sc-for list="{{ stripes }}" as="band" hint-placeholder-count="6">
         <rect x="0" y="{{ band.y }}" width="200" height="10" fill="#83ae64"></rect>
       </sc-for>
-      <sc-for list="{{ daisies }}" as="d" hint-placeholder-count="14">
-        <circle cx="{{ d.x }}" cy="{{ d.y }}" r="0.9" fill="#f2f0dd"></circle>
+      <sc-for list="{{ flowers }}" as="fl" hint-placeholder-count="14">
+        <g transform="{{ fl.t }}">
+          <circle cx="0" cy="-1.3" r="1.15" fill="{{ fl.petal }}"></circle>
+          <circle cx="1.24" cy="-0.4" r="1.15" fill="{{ fl.petal }}"></circle>
+          <circle cx="0.76" cy="1.05" r="1.15" fill="{{ fl.petal }}"></circle>
+          <circle cx="-0.76" cy="1.05" r="1.15" fill="{{ fl.petal }}"></circle>
+          <circle cx="-1.24" cy="-0.4" r="1.15" fill="{{ fl.petal }}"></circle>
+          <circle cx="0" cy="0" r="0.95" fill="{{ fl.core }}"></circle>
+        </g>
       </sc-for>
 
       <!-- A tree leaning in over the corner. -->
@@ -116,7 +123,7 @@
 
   <div style="display: flex; flex-direction: column; gap: 5px; width: 416px;">
     <p class="cap-name">Option E — Sunlit yard</p>
-    <p class="cap-body">The plain sunny version: B's circuit, D's daylight, no fence, no rider, no green. Nothing marks the lap but the bike itself and the chalk at the start line — the metres in the footer carry the rest. Clean, and the easiest of the four to keep tidy when the tracks get longer.</p>
+    <p class="cap-body">B's circuit in D's daylight: no fence, no rider, no green. Nothing marks the lap but the bike itself and the chalk at the start line — the metres in the footer carry the rest. Flowers come up in clumps round the edges of the lawn, out of the way of the track.</p>
   </div>
 </div>
 </x-dc>
@@ -156,11 +163,22 @@ class Component extends DCLogic {
     const stripes = [];
     for (let y = 0; y < 120; y += 20) stripes.push({ y: y });
 
+    // Flowers come up in clumps, not on a grid: x, y, size, and whether it is
+    // one of the pink ones.
     const seeds = [
-      [30, 48], [22, 66], [40, 88], [52, 104], [80, 112], [116, 114], [150, 108],
-      [172, 88], [184, 66], [178, 40], [156, 18], [124, 10], [88, 12], [56, 22],
+      [10, 52, 1, 0], [15.5, 58, 0.85, 1], [8, 64, 0.75, 0],
+      [46, 108, 1, 0], [52.5, 113, 0.8, 0], [39, 114, 0.7, 1],
+      [96, 110, 0.9, 0], [104, 115.5, 0.7, 0],
+      [188, 52, 1, 0], [192, 60, 0.8, 1], [184, 44, 0.7, 0],
+      [72, 10, 0.9, 0], [150, 12, 0.8, 0], [158, 6.5, 0.65, 0],
     ];
-    const daisies = seeds.map(function (s) { return { x: s[0], y: s[1] }; });
+    const flowers = seeds.map(function (s) {
+      return {
+        t: 'translate(' + s[0] + ' ' + s[1] + ') scale(' + s[2] + ')',
+        petal: s[3] ? '#eb9ab3' : '#f6f2e2',
+        core: s[3] ? '#f6f2e2' : '#f2c94c',
+      };
+    });
 
     return {
       loop: loop,
@@ -168,7 +186,7 @@ class Component extends DCLogic {
       bike: 'translate(' + bx.toFixed(2) + ' ' + by.toFixed(2) + ') scale(' + (dir * 1.1).toFixed(2) + ' 1.1)',
       metres: Math.floor(f * 30),
       stripes: stripes,
-      daisies: daisies,
+      flowers: flowers,
     };
   }
 }

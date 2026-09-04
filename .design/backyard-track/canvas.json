@@ -1,35 +1,36 @@
 {
   "pages": [
-    { "id": "page-1", "name": "Sunny" },
-    { "id": "page-2", "name": "First round" }
+    { "id": "page-1", "name": "Backyard loop" },
+    { "id": "page-2", "name": "Not chosen" }
   ],
   "artboards": [
-    { "file": "Main.dc.html", "title": "Option E — Sunlit yard", "page": "page-1", "x": 0, "y": 0, "w": 480, "h": 480 },
-    { "file": "LongShadows.dc.html", "title": "Option F — Long shadows", "page": "page-1", "x": 600, "y": 0, "w": 480, "h": 480 },
-    { "file": "DustTrail.dc.html", "title": "Option G — Dust trail", "page": "page-1", "x": 0, "y": 620, "w": 480, "h": 480 },
-    { "file": "StickerGarden.dc.html", "title": "Option H — Sticker garden", "page": "page-1", "x": 600, "y": 620, "w": 480, "h": 480 },
+    { "file": "Main.dc.html", "title": "Backyard loop", "page": "page-1", "x": 0, "y": 0, "w": 480, "h": 480 },
 
-    { "file": "GardenPlot.dc.html", "title": "Option A — Garden plot", "page": "page-2", "x": 0, "y": 0, "w": 480, "h": 480 },
-    { "file": "PitWall.dc.html", "title": "Option B — Pit wall", "page": "page-2", "x": 600, "y": 0, "w": 480, "h": 480 },
-    { "file": "LowAngle.dc.html", "title": "Option C — Low angle", "page": "page-2", "x": 0, "y": 620, "w": 480, "h": 480 },
-    { "file": "SundayAfternoon.dc.html", "title": "Option D — Sunday afternoon", "page": "page-2", "x": 600, "y": 620, "w": 480, "h": 480 }
+    { "file": "LongShadows.dc.html", "title": "Option F — Long shadows", "page": "page-2", "x": 0, "y": 0, "w": 480, "h": 480 },
+    { "file": "DustTrail.dc.html", "title": "Option G — Dust trail", "page": "page-2", "x": 600, "y": 0, "w": 480, "h": 480 },
+    { "file": "StickerGarden.dc.html", "title": "Option H — Sticker garden", "page": "page-2", "x": 1200, "y": 0, "w": 480, "h": 480 },
+
+    { "file": "GardenPlot.dc.html", "title": "Option A — Garden plot", "page": "page-2", "x": 0, "y": 620, "w": 480, "h": 480 },
+    { "file": "PitWall.dc.html", "title": "Option B — Pit wall", "page": "page-2", "x": 600, "y": 620, "w": 480, "h": 480 },
+    { "file": "LowAngle.dc.html", "title": "Option C — Low angle", "page": "page-2", "x": 1200, "y": 620, "w": 480, "h": 480 },
+    { "file": "SundayAfternoon.dc.html", "title": "Option D — Sunday afternoon", "page": "page-2", "x": 1800, "y": 620, "w": 480, "h": 480 }
   ],
   "annotations": [
     {
       "id": "brief",
       "page": "page-1",
       "x": 0,
-      "y": -230,
-      "w": 1080,
-      "text": "B's circuit, D's daylight. No fence, nobody on the bike, no green progress arc anywhere.\n\nWhat is left to decide is the light and how much the yard says about itself — and whether the lap needs any marking at all beyond the bike, which only G answers with a yes.\n\nEach artboard has a Progress slider above it: drag it to ride the bike round and see how it holds up at 0%, halfway and just before the line."
+      "y": -190,
+      "w": 780,
+      "text": "The settled design for the track panel: sunny, no fence, nobody on the bike, no green progress arc. Flowers instead of the white dots, in clumps round the edges of the lawn.\n\nDrag the Progress slider above the artboard to ride the bike round the lap."
     },
     {
       "id": "round1",
       "page": "page-2",
       "x": 0,
       "y": -170,
-      "w": 1080,
-      "text": "The first round, kept for reference. B is the one this went on to build from; A, C and D are parked."
+      "w": 1680,
+      "text": "Everything that was not picked, kept for reference. F, G and H are the other sunny takes; A to D are the first round, before the fence came out and the rider came off."
     }
   ],
   "launch": { "view": "canvas", "page": "page-1" }
