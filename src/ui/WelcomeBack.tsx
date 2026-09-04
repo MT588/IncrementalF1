@@ -14,7 +14,8 @@ export function WelcomeBack() {
       className="border-sector-green bg-panel mt-4 flex items-center justify-between gap-3 border-l-4 px-4 py-3 text-sm"
     >
       <p>
-        {STRINGS.WELCOME_BACK} <span className="text-sector-green tabular-nums">{formatXp(earned)}</span>.
+        {STRINGS.WELCOME_BACK}{' '}
+        <span className="text-sector-green tabular-nums">{formatXp(earned)}</span>.
       </p>
       <button
         type="button"

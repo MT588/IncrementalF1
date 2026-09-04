@@ -1,11 +1,7 @@
 import type { UpgradeDef } from '../types';
 
 export type UpgradeId =
-  | 'biggerGears'
-  | 'autoPedal'
-  | 'betterBike'
-  | 'slipstream'
-  | 'trainingPartner';
+  'biggerGears' | 'autoPedal' | 'betterBike' | 'slipstream' | 'trainingPartner';
 
 /**
  * Every upgrade is repeatable: cost grows per level, the effect stacks.

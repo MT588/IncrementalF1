@@ -49,7 +49,7 @@ what lets a race be worth something no amount of riding can buy.
 A **track** is a distance and an XP rate. The backyard loop is 30 m at 1 XP a
 metre, so a lap pays 30 XP; adding one is a data row, not code.
 
-Because a lap is worth the metres it takes to ride it, XP *per second* works out
+Because a lap is worth the metres it takes to ride it, XP _per second_ works out
 to `m/s × xpPerMetre` — the lap distance cancels. A longer track therefore pays
 the same per second as a short one, just in larger and rarer chunks, which feels
 worse rather than better. **Later tracks have to raise `xpPerMetre` to be a
@@ -229,8 +229,20 @@ export const TRACKS: TrackDef[] = [
 
 export const UPGRADES: UpgradeDef[] = [
   // unlockAtLaps hides an upgrade until that many laps have been completed.
-  { id: 'biggerGears', baseCost: 25, growth: 1.9, unlockAtLaps: 0, effect: { kind: 'tapMetres', perLevel: 1 } },
-  { id: 'autoPedal', baseCost: 90, growth: 1.15, unlockAtLaps: 1, effect: { kind: 'speed', perLevel: 0.5 } },
+  {
+    id: 'biggerGears',
+    baseCost: 25,
+    growth: 1.9,
+    unlockAtLaps: 0,
+    effect: { kind: 'tapMetres', perLevel: 1 },
+  },
+  {
+    id: 'autoPedal',
+    baseCost: 90,
+    growth: 1.15,
+    unlockAtLaps: 1,
+    effect: { kind: 'speed', perLevel: 0.5 },
+  },
 ];
 ```
 

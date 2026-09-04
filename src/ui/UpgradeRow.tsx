@@ -55,10 +55,7 @@ export function UpgradeRow({ def }: Props) {
           </span>
         </div>
         {/* What it is worth as it stands. The gain from one more level is on the button. */}
-        <p
-          className="text-sector-green mt-1 text-xs tabular-nums"
-          data-testid="effect-now"
-        >
+        <p className="text-sector-green mt-1 text-xs tabular-nums" data-testid="effect-now">
           {effectNow(def, level)}
         </p>
       </div>
