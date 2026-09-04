@@ -1,0 +1,18 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "Option A — Garden plot", "x": 0, "y": 0, "w": 480, "h": 480 },
+    { "file": "PitWall.dc.html", "title": "Option B — Pit wall", "x": 600, "y": 0, "w": 480, "h": 480 },
+    { "file": "LowAngle.dc.html", "title": "Option C — Low angle", "x": 0, "y": 620, "w": 480, "h": 480 },
+    { "file": "SundayAfternoon.dc.html", "title": "Option D — Sunday afternoon", "x": 600, "y": 620, "w": 480, "h": 480 }
+  ],
+  "annotations": [
+    {
+      "id": "brief",
+      "x": 0,
+      "y": -210,
+      "w": 1080,
+      "text": "Four directions for the track panel in IncrementalF1.\n\nThe panel chrome — border, header, footer, type, colours — is lifted straight from TrackMap.tsx as it is today. Only the drawing inside the SVG changes.\n\nEach artboard has a Progress slider above it: drag it to ride the bike round the lap and see how the design holds up at 0%, halfway and just before the line."
+    }
+  ],
+  "launch": { "view": "canvas" }
+}

@@ -7,3 +7,6 @@ dist/
 playwright-report/
 test-results/
 *.tsbuildinfo
+
+# Seeded design canvas payloads are regenerated from the .dc.html sources
+.design/**/*-designs.html

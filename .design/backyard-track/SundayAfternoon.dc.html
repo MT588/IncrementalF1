@@ -1,0 +1,186 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a { color: #e2b93b; } a:hover { color: #e9eaec; }
+    .panel-h2 { margin: 0; font-family: 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif; font-size: 18px; line-height: 1; font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: #e9eaec; }
+    .meta { margin: 0; font-size: 12px; line-height: 16px; color: #7f8792; font-variant-numeric: tabular-nums; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: 480px; height: 480px; box-sizing: border-box; padding: 32px; background: #131519;">
+
+  <div style="width: 416px; border: 1px solid #2e333b; border-radius: 4px; background: #1b1e24; overflow: hidden;">
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #2e333b; padding: 8px 16px;">
+      <h2 class="panel-h2">Backyard loop</h2>
+      <p class="meta">Laps <span style="color: #e9eaec;">7</span></p>
+    </div>
+
+    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="A hand-drawn map of the garden in daylight: a wobbly dirt loop worn into the lawn, the shed in one corner, a picket fence around the edge and the bike partway round the lap.">
+      <!-- The lawn on a good afternoon. -->
+      <rect x="0" y="0" width="200" height="120" fill="#6f8f57"></rect>
+      <sc-for list="{{ patches }}" as="p" hint-placeholder-count="7">
+        <ellipse cx="{{ p.cx }}" cy="{{ p.cy }}" rx="{{ p.rx }}" ry="{{ p.ry }}" fill="#7b9c60"></ellipse>
+      </sc-for>
+
+      <!-- The shed, leaning a little. -->
+      <g transform="rotate(-1.8 27 30)">
+        <path d="M 8 26 L 27 11 L 46 26 Z" fill="#8a6743" stroke="#3a2c1d" stroke-width="1.4" stroke-linejoin="round"></path>
+        <path d="M 12 26 h 30 v 22 h -30 z" fill="#b3855a" stroke="#3a2c1d" stroke-width="1.4" stroke-linejoin="round"></path>
+        <path d="M 24 34 h 10 v 14 h -10 z" fill="#7a5637" stroke="#3a2c1d" stroke-width="1.2" stroke-linejoin="round"></path>
+        <circle cx="32" cy="41" r="1.2" fill="#3a2c1d"></circle>
+        <path d="M 15 30 h 7 v 6 h -7 z" fill="#d8e2c6" stroke="#3a2c1d" stroke-width="1.1" stroke-linejoin="round"></path>
+      </g>
+
+      <!-- A tree somebody planted too close to the fence. -->
+      <g>
+        <path d="M 182 108 v -14" stroke="#3a2c1d" stroke-width="3.4" stroke-linecap="round"></path>
+        <circle cx="182" cy="95" r="10.5" fill="#4f7a3d" stroke="#3a2c1d" stroke-width="1.3"></circle>
+        <circle cx="175" cy="91" r="6.5" fill="#5c8a46" stroke="#3a2c1d" stroke-width="1.2"></circle>
+      </g>
+
+      <!-- Picket fence, each one nailed on slightly wonky. -->
+      <sc-for list="{{ pickets }}" as="k" hint-placeholder-count="30">
+        <g transform="{{ k.t }}">
+          <path d="M 0 0 h 5.6 v 12 h -5.6 z" fill="#cfa974" stroke="#3a2c1d" stroke-width="1" stroke-linejoin="round"></path>
+          <path d="M 0 0 l 2.8 -3.6 l 2.8 3.6 z" fill="#dcb782" stroke="#3a2c1d" stroke-width="1" stroke-linejoin="round"></path>
+        </g>
+      </sc-for>
+
+      <!-- The lap, worn into the grass. Nothing here is a perfect circle. -->
+      <path d="{{ loop }}" fill="none" stroke="#3a2c1d" stroke-width="13.5" stroke-linejoin="round"></path>
+      <path d="{{ loop }}" fill="none" stroke="#b28553" stroke-width="11" stroke-linejoin="round"></path>
+      <path d="{{ loop }}" fill="none" stroke="#c49a68" stroke-width="11" stroke-dasharray="4 12" opacity="0.6" stroke-linecap="round"></path>
+
+      <!-- Distance covered so far. -->
+      <path d="{{ loop }}" fill="none" stroke="#2f6b4a" stroke-width="4.2" stroke-linecap="butt"
+            stroke-dasharray="{{ dash }}" stroke-dashoffset="{{ offset }}"></path>
+      <path d="{{ loop }}" fill="none" stroke="#4cc48a" stroke-width="2.4" stroke-linecap="butt"
+            stroke-dasharray="{{ dash }}" stroke-dashoffset="{{ offset }}"></path>
+
+      <!-- Start / finish, chalked on. -->
+      <g transform="{{ start }}" stroke="#3a2c1d" stroke-width="0.8">
+        <rect x="-4.2" y="-6.9" width="4.2" height="4.6" fill="#f4ead4"></rect>
+        <rect x="0" y="-2.3" width="4.2" height="4.6" fill="#f4ead4"></rect>
+        <rect x="-4.2" y="2.3" width="4.2" height="4.6" fill="#f4ead4"></rect>
+        <rect x="0" y="-6.9" width="4.2" height="4.6" fill="#3a2c1d"></rect>
+        <rect x="-4.2" y="-2.3" width="4.2" height="4.6" fill="#3a2c1d"></rect>
+        <rect x="0" y="2.3" width="4.2" height="4.6" fill="#3a2c1d"></rect>
+      </g>
+
+      <!-- The bike. -->
+      <g transform="{{ bike }}">
+        <ellipse cx="0" cy="2.8" rx="8" ry="1.8" fill="#3a2c1d" opacity="0.28"></ellipse>
+        <g fill="none" stroke="#3a2c1d" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-5" cy="0" r="3.4"></circle>
+          <circle cx="5" cy="0" r="3.4"></circle>
+          <path d="M -5 0 L -0.5 0.3 L -3.2 -5.2 Z M -3.2 -5.2 L 3.6 -5.6 M -0.5 0.3 L 3.6 -5.6 M 3.6 -5.6 L 5 0 M -4.4 -6 H -2.2 M 2.6 -6.4 L 4.6 -5.4"></path>
+          <path d="M -3 -6.2 L 0.2 -11.5 L 3.6 -6"></path>
+          <path d="M -3 -6.2 L 0.4 -4 L -0.5 0.3"></path>
+          <circle cx="1.6" cy="-13.6" r="2.2"></circle>
+        </g>
+        <g fill="none" stroke="#f0d878" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="-5" cy="0" r="3.4"></circle>
+          <circle cx="5" cy="0" r="3.4"></circle>
+          <path d="M -5 0 L -0.5 0.3 L -3.2 -5.2 Z M -3.2 -5.2 L 3.6 -5.6 M -0.5 0.3 L 3.6 -5.6 M 3.6 -5.6 L 5 0 M -4.4 -6 H -2.2 M 2.6 -6.4 L 4.6 -5.4"></path>
+        </g>
+        <g fill="none" stroke="#c9557a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M -3 -6.2 L 0.2 -11.5 L 3.6 -6"></path>
+          <path d="M -3 -6.2 L 0.4 -4 L -0.5 0.3"></path>
+        </g>
+        <circle cx="1.6" cy="-13.6" r="2.2" fill="#f4ead4"></circle>
+      </g>
+    </svg>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #2e333b; padding: 8px 16px; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums;">
+      <p style="margin: 0;"><span style="color: #4cc48a;">{{ metres }}</span><span style="color: #7f8792;"> / 30 m</span></p>
+      <p style="margin: 0; color: #7f8792;">A lap pays <span style="color: #e9eaec;">30.00 XP</span></p>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 5px; width: 416px;">
+    <p style="margin: 0; font-family: 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #e9eaec;">Option D — Sunday afternoon</p>
+    <p style="margin: 0; font-size: 11px; line-height: 16px; color: #7f8792; text-wrap: pretty;">Daylight, drawn by hand: nothing is a perfect circle, the pickets are all slightly wonky. The most obviously a backyard, and it makes the panel a bright window in a dark app — either the joke of the whole game, or a fight with the pit-wall look everywhere else. It does set up an arc: the daylight could drain away as the tracks get serious.</p>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"progress":{"editor":"range","default":62,"min":0,"max":100,"step":1,"unit":"%","section":"Lap"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const f = Math.min(1, Math.max(0, (this.props.progress ?? 62) / 100));
+
+    // A hand-drawn loop: an oval with the wobble of something worn in by a
+    // bike rather than drawn with a compass. Sampling it gives the path and
+    // the bike's place on it from the same maths, so they can never disagree.
+    const cx = 110, cy = 61, rx = 52, ry = 31;
+    const N = 240;
+    const at = function (i) {
+      const a = (i / N) * 2 * Math.PI - Math.PI / 2;
+      const k = 1 + 0.035 * Math.sin(3 * a + 0.7) + 0.02 * Math.cos(5 * a);
+      return { x: cx + rx * k * Math.cos(a), y: cy + ry * k * Math.sin(a) };
+    };
+
+    const pts = [];
+    for (let i = 0; i <= N; i++) pts.push(at(i));
+
+    let d = 'M ' + pts[0].x.toFixed(2) + ' ' + pts[0].y.toFixed(2);
+    const cum = [0];
+    for (let i = 1; i <= N; i++) {
+      d += ' L ' + pts[i].x.toFixed(2) + ' ' + pts[i].y.toFixed(2);
+      cum.push(cum[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y));
+    }
+    d += ' Z';
+    const len = cum[N];
+
+    // Walk the sampled loop to the point the given fraction of the way round.
+    const target = f * len;
+    let i = 1;
+    while (i < N && cum[i] < target) i++;
+    const span = cum[i] - cum[i - 1] || 1;
+    const t = (target - cum[i - 1]) / span;
+    const bx = pts[i - 1].x + (pts[i].x - pts[i - 1].x) * t;
+    const by = pts[i - 1].y + (pts[i].y - pts[i - 1].y) * t;
+    const dir = pts[i].x - pts[i - 1].x < 0 ? -1.15 : 1.15;
+
+    const pickets = [];
+    for (let x = 2; x < 197; x += 6.6) {
+      pickets.push({ t: 'translate(' + x.toFixed(1) + ' 2) rotate(' + (Math.sin(x) * 2.6).toFixed(2) + ' 2.8 6)' });
+      pickets.push({ t: 'translate(' + x.toFixed(1) + ' 106) rotate(' + (Math.cos(x * 1.3) * 2.6).toFixed(2) + ' 2.8 6)' });
+    }
+    for (let y = 16; y < 104; y += 6.6) {
+      pickets.push({ t: 'translate(2 ' + y.toFixed(1) + ') rotate(' + (Math.sin(y) * 2.4).toFixed(2) + ' 2.8 6)' });
+      pickets.push({ t: 'translate(192 ' + y.toFixed(1) + ') rotate(' + (Math.cos(y) * 2.4).toFixed(2) + ' 2.8 6)' });
+    }
+
+    const patches = [
+      { cx: 40, cy: 96, rx: 20, ry: 8 }, { cx: 150, cy: 24, rx: 22, ry: 9 },
+      { cx: 110, cy: 62, rx: 24, ry: 10 }, { cx: 88, cy: 108, rx: 18, ry: 6 },
+      { cx: 14, cy: 62, rx: 8, ry: 16 }, { cx: 72, cy: 14, rx: 14, ry: 6 },
+      { cx: 186, cy: 56, rx: 8, ry: 14 },
+    ];
+
+    return {
+      loop: d,
+      dash: len.toFixed(2),
+      offset: (len * (1 - f)).toFixed(2),
+      start: 'translate(' + pts[0].x.toFixed(2) + ' ' + pts[0].y.toFixed(2) + ')',
+      bike: 'translate(' + bx.toFixed(2) + ' ' + by.toFixed(2) + ') scale(' + dir + ' 1.15)',
+      metres: Math.floor(f * 30),
+      pickets: pickets,
+      patches: patches,
+    };
+  }
+}
+</script>
+</body>
+</html>
