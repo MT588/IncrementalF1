@@ -27,54 +27,50 @@
       <p class="meta">Laps <span style="color: #e9eaec;">7</span></p>
     </div>
 
-    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="The backyard on a sunny day: a dirt loop worn into the mown lawn, the shed standing in the middle of it and the bike partway round the lap.">
+    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="The backyard in late afternoon light: a dirt loop worn into the lawn, the shed in the middle of it throwing a long shadow, and the bike partway round the lap.">
 
-      <!-- Mown lawn. -->
-      <rect x="0" y="0" width="200" height="120" fill="#79a45d"></rect>
-      <sc-for list="{{ stripes }}" as="band" hint-placeholder-count="6">
-        <rect x="0" y="{{ band.y }}" width="200" height="10" fill="#83ae64"></rect>
-      </sc-for>
-      <sc-for list="{{ daisies }}" as="d" hint-placeholder-count="14">
-        <circle cx="{{ d.x }}" cy="{{ d.y }}" r="0.9" fill="#f2f0dd"></circle>
-      </sc-for>
+      <!-- Late light raking in from the top right. -->
+      <rect x="0" y="0" width="200" height="120" fill="#6b9552"></rect>
+      <polygon points="84,0 200,0 200,100" fill="#82ac62"></polygon>
+      <polygon points="132,0 200,0 200,56" fill="#93bb6d"></polygon>
 
-      <!-- A tree leaning in over the corner. -->
+      <!-- A tree over the corner the sun is coming from. -->
       <g>
-        <circle cx="12" cy="12" r="18" fill="#4f7a3d"></circle>
-        <circle cx="30" cy="18" r="10" fill="#5c8a46"></circle>
-        <circle cx="16" cy="30" r="9" fill="#446b34"></circle>
-      </g>
-      <g>
-        <circle cx="190" cy="112" r="15" fill="#4f7a3d"></circle>
-        <circle cx="176" cy="116" r="9" fill="#5c8a46"></circle>
+        <circle cx="190" cy="12" r="18" fill="#41682f"></circle>
+        <circle cx="172" cy="18" r="10" fill="#4d7a3a"></circle>
       </g>
 
       <!-- The lap, worn to bare dirt. -->
-      <path d="{{ loop }}" fill="none" stroke="#6f5232" stroke-width="15"></path>
-      <path d="{{ loop }}" fill="none" stroke="#bb8c5b" stroke-width="12.5"></path>
-      <path d="{{ loop }}" fill="none" stroke="#d2ae7d" stroke-width="12.5" stroke-dasharray="5 13" opacity="0.5"></path>
+      <path d="{{ loop }}" fill="none" stroke="#6b4e2f" stroke-width="15"></path>
+      <path d="{{ loop }}" fill="none" stroke="#c0905b" stroke-width="12.5"></path>
+      <path d="{{ loop }}" fill="none" stroke="#d9b585" stroke-width="12.5" stroke-dasharray="5 13" opacity="0.5"></path>
+
+      <!-- Everything throws its shadow the same way, across whatever is under it. -->
+      <g fill="#2f4d28" opacity="0.4">
+        <ellipse cx="146" cy="44" rx="25" ry="11" transform="rotate(-18 146 44)"></ellipse>
+        <polygon points="126,82 99.5,92.9 46.2,100.1 35.5,92.9 74,82"></polygon>
+      </g>
 
       <!-- Two slabs from the shed door out to the track. -->
-      <rect x="94" y="82.5" width="11" height="2.6" rx="0.5" fill="#9aa38c"></rect>
-      <rect x="94" y="86" width="11" height="2.6" rx="0.5" fill="#9aa38c" opacity="0.6"></rect>
+      <rect x="94" y="82.5" width="11" height="2.6" rx="0.5" fill="#93a086"></rect>
+      <rect x="94" y="86" width="11" height="2.6" rx="0.5" fill="#93a086" opacity="0.55"></rect>
 
-      <!-- The shed, standing in the middle of the loop. -->
+      <!-- The shed, its sunward side catching the light. -->
       <g>
-        <ellipse cx="100" cy="83" rx="31" ry="3" fill="#3a2c1d" opacity="0.22"></ellipse>
-        <path d="M 68 56 L 100 39 L 132 56 Z" fill="#8a6743"></path>
-        <path d="M 100 39 L 132 56 L 122 56 Z" fill="#75563a"></path>
-        <rect x="74" y="56" width="52" height="26" fill="#c3915f"></rect>
-        <rect x="118" y="56" width="8" height="26" fill="#a1734a"></rect>
-        <line x1="68" y1="56" x2="132" y2="56" stroke="#6f4e32" stroke-width="1.4"></line>
-        <line x1="82" y1="57" x2="82" y2="82" stroke="#ad7f52" stroke-width="0.9"></line>
-        <line x1="88" y1="57" x2="88" y2="82" stroke="#ad7f52" stroke-width="0.9"></line>
-        <line x1="112" y1="57" x2="112" y2="82" stroke="#ad7f52" stroke-width="0.9"></line>
-        <rect x="93" y="61" width="13" height="21" fill="#5b3f28"></rect>
-        <rect x="94.4" y="62.4" width="10.2" height="18.2" fill="#3f2c1c"></rect>
+        <path d="M 68 56 L 100 39 L 132 56 Z" fill="#7d5c3c"></path>
+        <path d="M 100 39 L 132 56 L 120 56 Z" fill="#9a7550"></path>
+        <rect x="74" y="56" width="52" height="26" fill="#a97c50"></rect>
+        <rect x="112" y="56" width="14" height="26" fill="#cb9963"></rect>
+        <line x1="68" y1="56" x2="132" y2="56" stroke="#67472c" stroke-width="1.4"></line>
+        <line x1="82" y1="57" x2="82" y2="82" stroke="#966c44" stroke-width="0.9"></line>
+        <line x1="88" y1="57" x2="88" y2="82" stroke="#966c44" stroke-width="0.9"></line>
+        <line x1="118" y1="57" x2="118" y2="82" stroke="#b6874f" stroke-width="0.9"></line>
+        <rect x="93" y="61" width="13" height="21" fill="#553a24"></rect>
+        <rect x="94.4" y="62.4" width="10.2" height="18.2" fill="#3a2819"></rect>
         <circle cx="103.6" cy="72" r="0.9" fill="#d8c9a8"></circle>
-        <rect x="79" y="61" width="10" height="8" fill="#cfe0c0"></rect>
-        <rect x="79" y="61" width="10" height="8" fill="none" stroke="#6f4e32" stroke-width="1"></rect>
-        <line x1="84" y1="61" x2="84" y2="69" stroke="#6f4e32" stroke-width="0.8"></line>
+        <rect x="79" y="61" width="10" height="8" fill="#b9cdaa"></rect>
+        <rect x="79" y="61" width="10" height="8" fill="none" stroke="#67472c" stroke-width="1"></rect>
+        <line x1="84" y1="61" x2="84" y2="69" stroke="#67472c" stroke-width="0.8"></line>
       </g>
 
       <!-- Start / finish, chalked across the top straight. -->
@@ -87,9 +83,14 @@
         <rect x="0" y="2.2" width="3.8" height="4.4" fill="#4a3423"></rect>
       </g>
 
+      <!-- The bike's shadow keeps the sun's direction, so it sits outside the
+           group that flips the bike round to face its way of travel. -->
+      <g transform="{{ bikeShadow }}">
+        <ellipse cx="-8" cy="6" rx="12" ry="2.6" fill="#2f4d28" opacity="0.44" transform="rotate(-10)"></ellipse>
+      </g>
+
       <!-- The bike, nobody on it. -->
       <g transform="{{ bike }}">
-        <ellipse cx="0" cy="5.2" rx="9.5" ry="2" fill="#3a2c1d" opacity="0.25"></ellipse>
         <g fill="none" stroke="#2e2419" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M -6.2 0 L -0.6 0.6 L -3.9 -6.4 Z M -3.9 -6.4 L 4.4 -6.8 M -0.6 0.6 L 4.4 -6.8 M 4.4 -6.8 L 6.2 0 M -5.4 -7.2 H -2.6 M 3.2 -7.6 L 5.6 -6.4"></path>
         </g>
@@ -115,8 +116,8 @@
   </div>
 
   <div style="display: flex; flex-direction: column; gap: 5px; width: 416px;">
-    <p class="cap-name">Option E — Sunlit yard</p>
-    <p class="cap-body">The plain sunny version: B's circuit, D's daylight, no fence, no rider, no green. Nothing marks the lap but the bike itself and the chalk at the start line — the metres in the footer carry the rest. Clean, and the easiest of the four to keep tidy when the tracks get longer.</p>
+    <p class="cap-name">Option F — Long shadows</p>
+    <p class="cap-body">Same yard, late in the afternoon. The sun sits low off the top right, the shed throws its shadow right across the bottom straight, and the light gives the panel real depth. The catch is the fixed sun: the bike keeps the same shadow all the way round, which is a small lie you notice most on the far side.</p>
   </div>
 </div>
 </x-dc>
@@ -126,7 +127,6 @@ class Component extends DCLogic {
   renderVals() {
     const f = Math.min(1, Math.max(0, (this.props.progress ?? 62) / 100));
 
-    // A stadium: two straights and two semicircles, drawn from the top centre.
     const r = 32, top = 28, bottom = 92, left = 62, right = 138, mid = 60;
     const loop = 'M 100 ' + top + ' H ' + right +
       ' A ' + r + ' ' + r + ' 0 0 1 ' + right + ' ' + bottom +
@@ -134,7 +134,6 @@ class Component extends DCLogic {
     const straight = right - left;
     const len = 2 * straight + 2 * Math.PI * r;
 
-    // Walk the stadium by arc length so the bike sits exactly where it should.
     const d = f * len;
     const half = straight / 2;
     const arc = Math.PI * r;
@@ -153,22 +152,13 @@ class Component extends DCLogic {
       bx = left + (d - half - 2 * arc - straight); by = top; dir = 1;
     }
 
-    const stripes = [];
-    for (let y = 0; y < 120; y += 20) stripes.push({ y: y });
-
-    const seeds = [
-      [30, 48], [22, 66], [40, 88], [52, 104], [80, 112], [116, 114], [150, 108],
-      [172, 88], [184, 66], [178, 40], [156, 18], [124, 10], [88, 12], [56, 22],
-    ];
-    const daisies = seeds.map(function (s) { return { x: s[0], y: s[1] }; });
-
+    const place = 'translate(' + bx.toFixed(2) + ' ' + by.toFixed(2) + ')';
     return {
       loop: loop,
       start: 'translate(100 ' + top + ')',
-      bike: 'translate(' + bx.toFixed(2) + ' ' + by.toFixed(2) + ') scale(' + (dir * 1.1).toFixed(2) + ' 1.1)',
+      bikeShadow: place,
+      bike: place + ' scale(' + (dir * 1.1).toFixed(2) + ' 1.1)',
       metres: Math.floor(f * 30),
-      stripes: stripes,
-      daisies: daisies,
     };
   }
 }

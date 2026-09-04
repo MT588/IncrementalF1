@@ -1,0 +1,174 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+  <style>
+    body { margin: 0; font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+    a { color: #e2b93b; } a:hover { color: #e9eaec; }
+    .panel-h2 { margin: 0; font-family: 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif; font-size: 18px; line-height: 1; font-weight: 600; letter-spacing: 0.025em; text-transform: uppercase; color: #e9eaec; }
+    .meta { margin: 0; font-size: 12px; line-height: 16px; color: #7f8792; font-variant-numeric: tabular-nums; }
+    .cap-name { margin: 0; font-family: 'Barlow Condensed', Impact, 'Arial Narrow', sans-serif; font-size: 15px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #e9eaec; }
+    .cap-body { margin: 0; font-size: 11px; line-height: 16px; color: #7f8792; text-wrap: pretty; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; width: 480px; height: 480px; box-sizing: border-box; padding: 32px; background: #131519;">
+
+  <div style="width: 416px; border: 1px solid #2e333b; border-radius: 4px; background: #1b1e24; overflow: hidden;">
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-bottom: 1px solid #2e333b; padding: 8px 16px;">
+      <h2 class="panel-h2">Backyard loop</h2>
+      <p class="meta">Laps <span style="color: #e9eaec;">7</span></p>
+    </div>
+
+    <svg viewBox="0 0 200 120" style="display: block; width: 100%;" role="img" aria-label="A bold flat drawing of the backyard: a dirt loop worn into the lawn, the shed in the middle of it with a hose reel and plant pots, a football on the grass, and the bike partway round the lap.">
+
+      <!-- Lawn. -->
+      <rect x="0" y="0" width="200" height="120" fill="#82b25c"></rect>
+      <ellipse cx="34" cy="104" rx="26" ry="10" fill="#8fbd66"></ellipse>
+      <ellipse cx="172" cy="34" rx="24" ry="10" fill="#8fbd66"></ellipse>
+      <ellipse cx="100" cy="60" rx="30" ry="12" fill="#8fbd66"></ellipse>
+
+      <!-- Plant pots along the top corner. -->
+      <g stroke="#2f2318" stroke-width="1.8" stroke-linejoin="round">
+        <circle cx="11" cy="10" r="4.4" fill="#5c9440"></circle>
+        <circle cx="17" cy="12" r="3.4" fill="#6ba64a"></circle>
+        <circle cx="15" cy="7" r="3.2" fill="#4f8a38"></circle>
+        <path d="M 6 15 h 15 l -2 9 h -11 z" fill="#c2703f"></path>
+        <path d="M 5 13.4 h 17 v 3 h -17 z" fill="#d07f4c"></path>
+        <circle cx="32" cy="17" r="3.6" fill="#6ba64a"></circle>
+        <path d="M 27 20 h 10 l -1.4 6.4 h -7.2 z" fill="#c2703f"></path>
+        <path d="M 26.2 18.6 h 11.6 v 2.4 h -11.6 z" fill="#d07f4c"></path>
+      </g>
+
+      <!-- A football somebody left out. -->
+      <g>
+        <ellipse cx="15" cy="112" rx="6.5" ry="1.8" fill="#2f2318" opacity="0.2"></ellipse>
+        <circle cx="15" cy="107" r="6" fill="#f4f1e4" stroke="#2f2318" stroke-width="1.8"></circle>
+        <path d="M 15 103.4 l 2.6 1.9 l -1 3.1 h -3.2 l -1 -3.1 z" fill="#2f2318"></path>
+      </g>
+
+      <!-- A bush in the far corner. -->
+      <g stroke="#2f2318" stroke-width="1.8">
+        <circle cx="190" cy="110" r="14" fill="#4f8a38"></circle>
+        <circle cx="174" cy="114" r="8" fill="#5c9c42"></circle>
+      </g>
+
+      <!-- The lap, worn to bare dirt. -->
+      <path d="{{ loop }}" fill="none" stroke="#2f2318" stroke-width="16"></path>
+      <path d="{{ loop }}" fill="none" stroke="#c9975f" stroke-width="12.5"></path>
+      <path d="{{ loop }}" fill="none" stroke="#dcb583" stroke-width="12.5" stroke-dasharray="4 14" opacity="0.55"></path>
+
+      <!-- A bit of patio outside the shed door. -->
+      <g stroke="#2f2318" stroke-width="1.4" stroke-linejoin="round">
+        <rect x="90" y="82" width="9" height="4" rx="0.8" fill="#a9b29c"></rect>
+        <rect x="100" y="82" width="9" height="4" rx="0.8" fill="#a9b29c"></rect>
+      </g>
+
+      <!-- The shed, with the hose still hanging on the wall. -->
+      <g stroke="#2f2318" stroke-width="2" stroke-linejoin="round">
+        <path d="M 66 56 L 100 37 L 134 56 Z" fill="#915f3a"></path>
+        <rect x="72" y="56" width="56" height="26" fill="#d29a63"></rect>
+        <rect x="92" y="62" width="14" height="20" fill="#6b4526"></rect>
+        <rect x="76" y="61" width="11" height="9" fill="#c3dcb2"></rect>
+      </g>
+      <g stroke="#2f2318" stroke-width="1.4" stroke-linejoin="round">
+        <line x1="99" y1="62" x2="99" y2="82"></line>
+        <circle cx="103.4" cy="72" r="1.1" fill="#2f2318" stroke="none"></circle>
+        <line x1="81.5" y1="61" x2="81.5" y2="70"></line>
+        <circle cx="116" cy="67" r="4.6" fill="none" stroke="#3f7a2e" stroke-width="1.8"></circle>
+        <circle cx="116" cy="67" r="2.2" fill="none" stroke="#3f7a2e" stroke-width="1.6"></circle>
+        <path d="M 116 71.6 q 2.4 3.4 -0.6 6.4" fill="none" stroke="#3f7a2e" stroke-width="1.5" stroke-linecap="round"></path>
+      </g>
+
+      <!-- Start / finish, painted across the top straight. -->
+      <g transform="{{ start }}">
+        <rect x="-4" y="-6.8" width="4" height="4.5" fill="#f7f2e2"></rect>
+        <rect x="0" y="-2.3" width="4" height="4.5" fill="#f7f2e2"></rect>
+        <rect x="-4" y="2.2" width="4" height="4.5" fill="#f7f2e2"></rect>
+        <rect x="0" y="-6.8" width="4" height="4.5" fill="#2f2318"></rect>
+        <rect x="-4" y="-2.3" width="4" height="4.5" fill="#2f2318"></rect>
+        <rect x="0" y="2.2" width="4" height="4.5" fill="#2f2318"></rect>
+      </g>
+
+      <!-- The bike, nobody on it. -->
+      <g transform="{{ bike }}">
+        <ellipse cx="0" cy="5.4" rx="10" ry="2.1" fill="#2f2318" opacity="0.25"></ellipse>
+        <g fill="none" stroke="#2f2318" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M -6.2 0 L -0.6 0.6 L -3.9 -6.4 Z M -3.9 -6.4 L 4.4 -6.8 M -0.6 0.6 L 4.4 -6.8 M 4.4 -6.8 L 6.2 0 M -5.4 -7.2 H -2.6 M 3.2 -7.6 L 5.6 -6.4"></path>
+        </g>
+        <g fill="none" stroke="#e0452a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M -6.2 0 L -0.6 0.6 L -3.9 -6.4 Z M -3.9 -6.4 L 4.4 -6.8 M -0.6 0.6 L 4.4 -6.8 M 4.4 -6.8 L 6.2 0 M -5.4 -7.2 H -2.6 M 3.2 -7.6 L 5.6 -6.4"></path>
+        </g>
+        <g fill="none" stroke="#2f2318" stroke-width="3">
+          <circle cx="-6.2" cy="0" r="4.2"></circle>
+          <circle cx="6.2" cy="0" r="4.2"></circle>
+        </g>
+        <g fill="none" stroke="#f7f2e2" stroke-width="0.9">
+          <circle cx="-6.2" cy="0" r="3"></circle>
+          <circle cx="6.2" cy="0" r="3"></circle>
+        </g>
+        <circle cx="-0.6" cy="0.6" r="1.3" fill="#2f2318"></circle>
+      </g>
+    </svg>
+
+    <div style="display: flex; align-items: baseline; justify-content: space-between; border-top: 1px solid #2e333b; padding: 8px 16px; font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums;">
+      <p style="margin: 0;"><span style="color: #4cc48a;">{{ metres }}</span><span style="color: #7f8792;"> / 30 m</span></p>
+      <p style="margin: 0; color: #7f8792;">A lap pays <span style="color: #e9eaec;">30.00 XP</span></p>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 5px; width: 416px;">
+    <p class="cap-name">Option H — Sticker garden</p>
+    <p class="cap-body">The same yard drawn heavier: thick outlines, flatter and louder colour, and the clutter of a garden somebody actually uses — pots by the corner, a football left out, the hose still on the shed wall. The most character of the four, and the most upkeep: every new track has to be drawn to this standard or it stops matching.</p>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"progress":{"editor":"range","default":62,"min":0,"max":100,"step":1,"unit":"%","section":"Lap"}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const f = Math.min(1, Math.max(0, (this.props.progress ?? 62) / 100));
+
+    const r = 32, top = 28, bottom = 92, left = 62, right = 138, mid = 60;
+    const loop = 'M 100 ' + top + ' H ' + right +
+      ' A ' + r + ' ' + r + ' 0 0 1 ' + right + ' ' + bottom +
+      ' H ' + left + ' A ' + r + ' ' + r + ' 0 0 1 ' + left + ' ' + top + ' Z';
+    const straight = right - left;
+    const len = 2 * straight + 2 * Math.PI * r;
+
+    const d = f * len;
+    const half = straight / 2;
+    const arc = Math.PI * r;
+    let bx, by, dir;
+    if (d < half) {
+      bx = 100 + d; by = top; dir = 1;
+    } else if (d < half + arc) {
+      const a = (d - half) / r - Math.PI / 2;
+      bx = right + r * Math.cos(a); by = mid + r * Math.sin(a); dir = Math.cos(a) < 0 ? -1 : 1;
+    } else if (d < half + arc + straight) {
+      bx = right - (d - half - arc); by = bottom; dir = -1;
+    } else if (d < half + 2 * arc + straight) {
+      const a = (d - half - arc - straight) / r + Math.PI / 2;
+      bx = left + r * Math.cos(a); by = mid + r * Math.sin(a); dir = Math.cos(a) < 0 ? -1 : 1;
+    } else {
+      bx = left + (d - half - 2 * arc - straight); by = top; dir = 1;
+    }
+
+    return {
+      loop: loop,
+      start: 'translate(100 ' + top + ')',
+      bike: 'translate(' + bx.toFixed(2) + ' ' + by.toFixed(2) + ') scale(' + (dir * 1.1).toFixed(2) + ' 1.1)',
+      metres: Math.floor(f * 30),
+    };
+  }
+}
+</script>
+</body>
+</html>
