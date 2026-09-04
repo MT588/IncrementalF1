@@ -4,10 +4,10 @@ A browser incremental game about riding from a bicycle in the backyard to a
 Formula 1 team. Tap the pedals to cover distance; every completed lap pays XP.
 Buy upgrades that pedal for you and make each lap worth more.
 
-Status: **M1.6**. Backyard loop (30 m, one metre per tap, 1 XP a metre), a
-visual track map, five repeatable upgrades revealed as the laps add up, offline
-progress, local autosave. XP is the only currency for now; prize money arrives
-with races.
+Status: **M1.6.5**. Backyard loop (30 m, one metre per tap, 1 XP a metre) drawn
+as the yard it happens in — lawn, shed, a bike going round — five repeatable
+upgrades revealed as the laps add up, offline progress, local autosave. XP is
+the only currency for now; prize money arrives with races.
 
 See [PLAN.md](./PLAN.md) for the full design and roadmap.
 
@@ -82,7 +82,7 @@ src/
     save/     save format, validation and version migrations
   store/      Zustand store bridging engine and UI
   services/   game loop (requestAnimationFrame, fixed step) and localStorage autosave
-  ui/         React components, including the SVG track map
+  ui/         React components, including the drawn backyard and its track map
   util/       number formatting, track geometry
 e2e/          Playwright tests
 .vscode/      editor tasks, launch config and recommended extensions

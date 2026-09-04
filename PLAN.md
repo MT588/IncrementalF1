@@ -436,6 +436,8 @@ with XP — see below.)
   level) and **Racing tyres** (×1.5 per lap per level).
 - Visual track map: inline SVG circle with a progress arc and a dot for the
   bike, driven by pure `pointOnCircle` maths rather than DOM measurement.
+  (Historical: the circle, the arc and the dot were all replaced when the
+  backyard was actually drawn — see M1.6.5 below.)
 - Save v2 with the first real `migrate.ts` (v1 money and laps carry over, the
   mechanics are dropped); `fromSave` is now genuinely throw-free.
 - 50 Vitest unit tests, 4 Playwright e2e tests.
@@ -494,6 +496,35 @@ Then the early game was reshaped so the player meets one thing at a time:
   so keyboard focus and a tap reveal the tooltip too — hover alone would hide
   the text from every phone.
 - 79 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.6.5 — The backyard, actually drawn — done
+
+Status: shipped. The track map stopped being a diagram of a lap and became a
+picture of the yard it happens in: mown lawn, flowers at the edges, a shed
+standing in the infield, and a red bike going round it with nobody on it.
+
+- The lap is a **stadium** — two straights joined by semicircular ends —
+  rather than a circle, so `util/pointOnCircle.ts` gave way to
+  `util/stadium.ts`. Still pure maths rather than `getPointAtLength`, so the
+  map needs no DOM, but the shape now has to be walked by **arc length**: at
+  even fractions of a lap the rider covers even ground, bends included, which
+  a plain angle sweep would not give.
+- `pointOnStadium` returns which way the rider is travelling alongside where
+  it is, so the two can never disagree. The bike turns to face the other way
+  at the widest point of each bend rather than snapping round when the next
+  straight begins.
+- The green progress arc is gone. Nothing marks the lap on the track but the
+  bike itself and the chalk at the start line; the metres in the footer carry
+  the rest. If that turns out to be too little to read at a glance, the
+  alternative already drawn is a dust trail — the ground covered this lap
+  churned lighter — rather than the arc coming back.
+- Scenery lives in `ui/BackyardScene.tsx` with its own palette of greens and
+  browns, deliberately **not** theme tokens: the yard is not pit-wall chrome,
+  and the next track along brings its own. `ui/backyardLayout.ts` holds the
+  view box and the track's measurements, `ui/Bicycle.tsx` the bike.
+- Four directions were drawn and narrowed to this one over two rounds; the
+  sources are under `.design/backyard-track/`.
+- 85 Vitest unit tests, 7 Playwright e2e tests.
 
 ### M1.7 — The rest of the ladder (next)
 

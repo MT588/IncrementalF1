@@ -3,3 +3,6 @@ node_modules
 pnpm-lock.yaml
 playwright-report
 test-results
+
+# Design canvas sources: authored to the canvas format, not app style
+.design/

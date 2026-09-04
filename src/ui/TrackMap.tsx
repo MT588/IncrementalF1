@@ -3,22 +3,16 @@ import { STRINGS } from '@/engine/data/strings';
 import { xpPerLap } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 import { formatXp } from '@/util/formatNumber';
-import { pointOnCircle } from '@/util/pointOnCircle';
-
-// viewBox units. A circle keeps both the progress ring (2πr) and the dot
-// position exact; a later, non-circular track swaps this for an SVG <path>.
-const VIEW_W = 200;
-const VIEW_H = 120;
-const CX = VIEW_W / 2;
-const CY = VIEW_H / 2;
-const R = 42;
-const CIRCUMFERENCE = 2 * Math.PI * R;
+import { pointOnStadium } from '@/util/stadium';
+import { BACKYARD_TRACK, VIEW_H, VIEW_W } from './backyardLayout';
+import { BackyardScene } from './BackyardScene';
+import { Bicycle } from './Bicycle';
 
 export function TrackMap() {
   const state = useGameStore((s) => s.state);
   const track = getTrack(state.trackId);
   const fraction = state.lapProgressM / track.lapDistanceM;
-  const bike = pointOnCircle(CX, CY, R, fraction);
+  const rider = pointOnStadium(BACKYARD_TRACK, fraction);
 
   return (
     <section
@@ -44,53 +38,11 @@ export function TrackMap() {
         role="img"
         aria-label={`${track.name}: ${Math.floor(state.lapProgressM)} of ${track.lapDistanceM} metres into the lap`}
       >
-        {/* The fence around the yard. */}
-        <rect
-          x="6"
-          y="6"
-          width={VIEW_W - 12}
-          height={VIEW_H - 12}
-          rx="6"
-          fill="none"
-          stroke="var(--color-line)"
-          strokeWidth="1"
-          strokeDasharray="4 4"
-        />
-        {/* The lap itself. */}
-        <circle cx={CX} cy={CY} r={R} fill="none" stroke="var(--color-line)" strokeWidth="6" />
-        {/* Distance covered so far, drawn from the start line clockwise. */}
-        <circle
-          cx={CX}
-          cy={CY}
-          r={R}
-          fill="none"
-          stroke="var(--color-sector-green)"
-          strokeWidth="6"
-          strokeLinecap="butt"
-          strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={CIRCUMFERENCE * (1 - fraction)}
-          transform={`rotate(-90 ${CX} ${CY})`}
-        />
-        {/* Start / finish line at 12 o'clock. */}
-        <line
-          x1={CX}
-          y1={CY - R - 6}
-          x2={CX}
-          y2={CY - R + 6}
-          stroke="var(--color-ink)"
-          strokeWidth="2"
-        />
-        {/* The bike. No CSS transition: it would sweep backwards across the
-            circle on every lap rollover, and 10 updates a second already reads
+        <BackyardScene />
+        {/* No CSS transition on the bike: it would sweep backwards across the
+            yard on every lap rollover, and 10 updates a second already reads
             as smooth movement. */}
-        <circle
-          cx={bike.x}
-          cy={bike.y}
-          r="6"
-          fill="var(--color-sector-yellow)"
-          stroke="var(--color-asphalt)"
-          strokeWidth="2"
-        />
+        <Bicycle x={rider.x} y={rider.y} facing={rider.facing} />
       </svg>
 
       <div className="border-line flex items-baseline justify-between border-t px-4 py-2 text-xs tabular-nums">
