@@ -10,12 +10,20 @@ See [PLAN.md](./PLAN.md) for the full design and roadmap.
 
 ## Run it
 
-Requires **Node 22** (see `.nvmrc`) and **pnpm**. If you do not have pnpm, the
-version this repo expects comes from Node itself:
+Requires **Node 22** (see `.nvmrc`) and **pnpm 10.33** (pinned in
+`package.json`). If you do not have pnpm yet, pick whichever line works on
+your machine:
 
 ```sh
-corepack enable          # one-off; installs the pnpm pinned in package.json
+npm install -g pnpm@10.33.0    # works everywhere, no admin rights needed
+corepack enable                # alternative: uses the pnpm Node ships with
 ```
+
+On **Windows**, `corepack enable` usually fails with
+`EPERM: operation not permitted, open 'C:\Program Files\nodejs\pnpm.CMD'`.
+It writes shims into the Node install directory, which needs an elevated
+terminal. Either use the `npm install -g` line above, or run `corepack enable`
+once in a PowerShell started with **Run as administrator**.
 
 Then:
 
