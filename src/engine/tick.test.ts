@@ -20,14 +20,14 @@ describe('addDistance', () => {
     const after = addDistance(createInitialState(0), 30);
     expect(after.totalLaps).toBe(1);
     expect(after.lapProgressM).toBe(0);
-    expect(after.xp.toNumber()).toBe(30);
+    expect(after.xp.toNumber()).toBe(1);
   });
 
   it('pays every lap crossed and carries the remainder', () => {
     const after = addDistance(createInitialState(0), 65);
     expect(after.totalLaps).toBe(2);
     expect(after.lapProgressM).toBeCloseTo(5, 9);
-    expect(after.xp.toNumber()).toBe(60);
+    expect(after.xp.toNumber()).toBe(2);
   });
 
   it('counts from where the bike already was', () => {
@@ -54,7 +54,7 @@ describe('tick', () => {
     const after = tick(withLevels({ autoPedal: 1 }), 60);
     expect(after.totalLaps).toBe(1);
     expect(after.lapProgressM).toBeCloseTo(0, 9);
-    expect(after.xp.toNumber()).toBe(30);
+    expect(after.xp.toNumber()).toBe(1);
   });
 
   it('returns the same object when no time passes', () => {
@@ -69,7 +69,7 @@ describe('advanceTo', () => {
     const { state, simulatedSeconds } = advanceTo(withLevels({ autoPedal: 1 }, 1000), 122_000);
     expect(simulatedSeconds).toBe(121);
     expect(state.totalLaps).toBe(2);
-    expect(state.xp.toNumber()).toBe(60);
+    expect(state.xp.toNumber()).toBe(2);
     expect(state.lapProgressM).toBeCloseTo(0.5, 9);
     expect(state.lastTickAt).toBe(122_000);
   });
@@ -78,10 +78,10 @@ describe('advanceTo', () => {
     const dayLater = 24 * 60 * 60 * 1000;
     const { state, simulatedSeconds } = advanceTo(withLevels({ autoPedal: 1 }, 0), dayLater);
     expect(simulatedSeconds).toBe(MAX_CATCH_UP_SECONDS);
-    // 8 h at 0.5 m/s = 14400 m = 480 laps of 30 m. The XP total happens to
-    // equal the metres here because xpPerMetre is 1 and nothing multiplies it.
+    // 8 h at 0.5 m/s = 14400 m = 480 laps of 30 m, and a lap pays 1 XP with
+    // nothing bought to multiply it.
     expect(state.totalLaps).toBe(480);
-    expect(state.xp.toNumber()).toBe(480 * 30);
+    expect(state.xp.toNumber()).toBe(480);
     // Money has no earner until races: riding must never produce any.
     expect(state.money.toNumber()).toBe(0);
     expect(state.lastTickAt).toBe(dayLater);

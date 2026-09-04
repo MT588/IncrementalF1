@@ -8,7 +8,7 @@ describe('effectDelta', () => {
     expect(effectDelta(getUpgrade('autoPedal'))).toBe('+0.5 m/s');
     expect(effectDelta(getUpgrade('betterBike'))).toBe('×1.5 XP');
     expect(effectDelta(getUpgrade('slipstream'))).toBe('×1.2 speed');
-    expect(effectDelta(getUpgrade('trainingPartner'))).toBe('+0.5 taps/s');
+    expect(effectDelta(getUpgrade('trainingPartner'))).toBe('+0.5 clicks/s');
   });
 
   it('does not depend on the level owned', () => {
@@ -20,10 +20,10 @@ describe('effectDelta', () => {
 });
 
 describe('effectNow', () => {
-  it('counts from the base for metres per tap', () => {
+  it('counts from the base for metres per click', () => {
     const gears = getUpgrade('biggerGears');
-    expect(effectNow(gears, 0)).toBe('1 m per tap');
-    expect(effectNow(gears, 2)).toBe('3 m per tap');
+    expect(effectNow(gears, 0)).toBe('1 m per click');
+    expect(effectNow(gears, 2)).toBe('3 m per click');
   });
 
   it('reads zero for speed nobody has bought', () => {
@@ -33,14 +33,17 @@ describe('effectNow', () => {
   });
 
   it('compounds the multipliers', () => {
-    expect(effectNow(getUpgrade('betterBike'), 0)).toBe('×1.00 XP per lap');
+    // Two decimals at most, and no trailing zeros: the game shows no fractional
+    // XP, so a bare "×1" reads better than "×1.00" next to a whole balance.
+    expect(effectNow(getUpgrade('betterBike'), 0)).toBe('×1 XP per lap');
     expect(effectNow(getUpgrade('betterBike'), 2)).toBe('×2.25 XP per lap');
-    expect(effectNow(getUpgrade('slipstream'), 1)).toBe('×1.20 auto-speed');
+    expect(effectNow(getUpgrade('betterBike'), 3)).toBe('×3.38 XP per lap');
+    expect(effectNow(getUpgrade('slipstream'), 1)).toBe('×1.2 auto-speed');
   });
 
-  it('counts the training partner in taps', () => {
-    expect(effectNow(getUpgrade('trainingPartner'), 0)).toBe('0.0 taps a second');
-    expect(effectNow(getUpgrade('trainingPartner'), 4)).toBe('2.0 taps a second');
+  it('counts the training partner in clicks', () => {
+    expect(effectNow(getUpgrade('trainingPartner'), 0)).toBe('0.0 clicks a second');
+    expect(effectNow(getUpgrade('trainingPartner'), 4)).toBe('2.0 clicks a second');
   });
 });
 

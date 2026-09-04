@@ -3,7 +3,6 @@ import { nextUnlockAtLaps, unlockedUpgrades } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 import { Footer } from './Footer';
 import { Header } from './Header';
-import { PedalButton } from './PedalButton';
 import { TrackMap } from './TrackMap';
 import { UpgradeRow } from './UpgradeRow';
 import { WelcomeBack } from './WelcomeBack';
@@ -21,7 +20,6 @@ export function App() {
       <WelcomeBack />
       <main className="mt-6 flex flex-col gap-6">
         <TrackMap />
-        <PedalButton />
         <section aria-labelledby="shed-heading">
           <h2
             id="shed-heading"

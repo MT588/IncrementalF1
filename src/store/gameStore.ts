@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState } from '@/engine/types';
 import type { UpgradeId } from '@/engine/data/upgrades';
-import { buyUpgrade, pedal } from '@/engine/actions';
+import { buyUpgrade, click } from '@/engine/actions';
 import { createInitialState } from '@/engine/state';
 import { advanceTo } from '@/engine/tick';
 
@@ -12,7 +12,8 @@ export interface GameStore {
   /** XP earned while the tab was away, shown once as a welcome-back notice. */
   offlineXp: GameState['xp'] | null;
 
-  pedal: () => void;
+  /** One click on the track: the manual way to cover distance. */
+  click: () => void;
   buy: (id: UpgradeId, amount?: number) => void;
   /** Advance the simulation to `nowMs` (used by the loop and by offline catch-up). */
   advance: (nowMs: number, maxCatchUpSeconds?: number) => void;
@@ -27,7 +28,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   lastSavedAt: null,
   offlineXp: null,
 
-  pedal: () => set({ state: pedal(get().state) }),
+  click: () => set({ state: click(get().state) }),
   buy: (id, amount = 1) => set({ state: buyUpgrade(get().state, id, amount) }),
   advance: (nowMs, maxCatchUpSeconds) => {
     const before = get().state;

@@ -1,17 +1,17 @@
 import type { GameState } from './types';
-import { bulkCost, isUnlocked, metresPerTap } from './formulas';
+import { bulkCost, isUnlocked, metresPerClick } from './formulas';
 import { addDistance } from './tick';
 import { getUpgrade } from './data/upgrades';
 import type { UpgradeId } from './data/upgrades';
 
 /**
- * The manual action: one push of the pedals. XP only arrives when a lap
- * completes. How far a tap carries depends on the gears (see metresPerTap).
+ * The manual action: one click on the track. XP only arrives when a lap
+ * completes. How far a click carries depends on the gears (see metresPerClick).
  */
-export function pedal(state: GameState): GameState {
-  const metres = metresPerTap(state);
+export function click(state: GameState): GameState {
+  const metres = metresPerClick(state);
   const moved = addDistance(state, metres);
-  return { ...moved, totalTapsM: state.totalTapsM + metres };
+  return { ...moved, totalClicksM: state.totalClicksM + metres };
 }
 
 /**

@@ -34,6 +34,40 @@ const v2Save = {
   },
 };
 
+/** A save as M1.6 wrote them: XP paid at 30 a lap on the backyard loop. */
+const v3Save = {
+  version: 3,
+  savedAt: 555,
+  state: {
+    xp: '600',
+    money: '0',
+    trackId: 'backyard',
+    lapProgressM: 12,
+    totalLaps: 20,
+    totalTapsM: 300,
+    upgrades: { autoPedal: 3, betterBike: 1 },
+    lastTickAt: 456,
+    createdAt: 123,
+  },
+};
+
+/** A save as M1.6.6 wrote them: 1 XP a lap, and the manual action still a tap. */
+const v4Save = {
+  version: 4,
+  savedAt: 555,
+  state: {
+    xp: '20',
+    money: '0',
+    trackId: 'backyard',
+    lapProgressM: 12,
+    totalLaps: 20,
+    totalTapsM: 300,
+    upgrades: { autoPedal: 3, betterBike: 1 },
+    lastTickAt: 456,
+    createdAt: 123,
+  },
+};
+
 describe('save round trip', () => {
   it('preserves state including large Decimal XP', () => {
     const initial = createInitialState(123);
@@ -42,7 +76,7 @@ describe('save round trip', () => {
       xp: new Decimal('1.5e400'),
       lapProgressM: 12.5,
       totalLaps: 42,
-      totalTapsM: 900,
+      totalClicksM: 900,
       // Spread the initial levels so adding an upgrade does not break this fixture.
       upgrades: { ...initial.upgrades, autoPedal: 3, betterBike: 2, slipstream: 1 },
       lastTickAt: 456,
@@ -54,7 +88,7 @@ describe('save round trip', () => {
     expect(back!.trackId).toBe('backyard');
     expect(back!.lapProgressM).toBe(12.5);
     expect(back!.totalLaps).toBe(42);
-    expect(back!.totalTapsM).toBe(900);
+    expect(back!.totalClicksM).toBe(900);
     expect(back!.upgrades.autoPedal).toBe(3);
     expect(back!.upgrades.betterBike).toBe(2);
     expect(back!.upgrades.slipstream).toBe(1);
@@ -64,7 +98,7 @@ describe('save round trip', () => {
 
   it('writes the current version and timestamp', () => {
     const save = toSave(createInitialState(0), 999);
-    expect(save.version).toBe(3);
+    expect(save.version).toBe(5);
     expect(save.savedAt).toBe(999);
     expect(save.state.xp).toBe('0');
     expect(save.state.money).toBe('0');
@@ -95,24 +129,42 @@ describe('migration', () => {
   it('converts a v2 money balance into XP at the lap-payout ratio', () => {
     const back = fromSave(v2Save);
     expect(back).not.toBeNull();
-    // The old economy paid 5 a lap, the new one pays 30: the same 20 laps of
-    // buying power.
-    expect(back!.xp.toNumber()).toBe(600);
+    // The old economy paid 5 a lap, the current one pays 1: the same 20 laps of
+    // buying power, whatever the scale in between.
+    expect(back!.xp.toNumber()).toBe(20);
     expect(back!.money.toNumber()).toBe(0);
     // Everything else rides along untouched.
     expect(back!.totalLaps).toBe(20);
-    expect(back!.totalTapsM).toBe(300);
+    expect(back!.totalClicksM).toBe(300);
     expect(back!.lapProgressM).toBe(12);
     expect(back!.upgrades.autoPedal).toBe(3);
     expect(back!.upgrades.betterBike).toBe(1);
     expect(back!.upgrades.slipstream).toBe(0);
   });
 
-  it('carries money and laps from a v1 save through both steps', () => {
+  it('rescales a v3 XP balance to the laps it was worth', () => {
+    const back = fromSave(v3Save);
+    expect(back).not.toBeNull();
+    // 600 XP at 30 a lap was 20 laps of buying power; so is 20 XP at 1 a lap.
+    expect(back!.xp.toNumber()).toBe(20);
+    expect(back!.totalLaps).toBe(20);
+    expect(back!.upgrades.autoPedal).toBe(3);
+  });
+
+  it('renames a v4 tap counter into clicks', () => {
+    const back = fromSave(v4Save);
+    expect(back).not.toBeNull();
+    expect(back!.totalClicksM).toBe(300);
+    expect(back!.xp.toNumber()).toBe(20);
+    // A v4 save missing the counter is refused rather than started at zero.
+    expect(fromSave({ ...v4Save, state: { ...v4Save.state, totalTapsM: undefined } })).toBeNull();
+  });
+
+  it('carries money and laps from a v1 save through every step', () => {
     const back = fromSave(v1Save);
     expect(back).not.toBeNull();
-    // v1 money 1234 becomes v2 money 1234, then v3 XP 7404.
-    expect(back!.xp.toNumber()).toBe(7404);
+    // v1 money 1234 becomes v2 money 1234, then v3 XP 7404, then v4 XP 246.8.
+    expect(back!.xp.toNumber()).toBeCloseTo(246.8, 9);
     expect(back!.money.toNumber()).toBe(0);
     expect(back!.totalLaps).toBe(17);
     expect(back!.createdAt).toBe(123);
@@ -131,6 +183,8 @@ describe('migration', () => {
     expect(fromSave({ ...v2Save, state: { ...v2Save.state, money: 'abc' } })).toBeNull();
     // A missing balance must be refused rather than silently becoming zero.
     expect(fromSave({ ...v2Save, state: { ...v2Save.state, money: undefined } })).toBeNull();
+    // Same for the v3 -> v4 step, which divides the XP balance.
+    expect(fromSave({ ...v3Save, state: { ...v3Save.state, xp: 'abc' } })).toBeNull();
     expect(fromSave({ version: 1, savedAt: 0 })).toBeNull();
   });
 });

@@ -15,7 +15,7 @@ export function createInitialState(now: number): GameState {
     trackId: STARTING_TRACK_ID,
     lapProgressM: 0,
     totalLaps: 0,
-    totalTapsM: 0,
+    totalClicksM: 0,
     upgrades,
     lastTickAt: now,
     createdAt: now,

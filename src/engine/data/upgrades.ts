@@ -16,19 +16,19 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'biggerGears',
     name: 'Bigger gears',
     description: 'A longer chainring. Every push of the pedals travels further.',
-    // The first upgrade, so deliberately below one lap of the starting track
-    // (30 m × 1 XP/m): it is affordable the moment that first lap completes.
-    // A shorter starting track or a lower xpPerMetre would quietly break that.
-    baseCost: 25,
+    // The first upgrade, priced at exactly one lap of the starting track, so it
+    // is affordable the moment that first lap completes. Every other price in
+    // the shed reads the same way: a cost in XP is a count of laps.
+    baseCost: 1,
     growth: 1.9,
     unlockAtLaps: 0,
-    effect: { kind: 'tapMetres', perLevel: 1 },
+    effect: { kind: 'clickMetres', perLevel: 1 },
   },
   {
     id: 'autoPedal',
     name: 'Auto-pedal',
     description: 'Your legs keep turning on their own. Slowly.',
-    baseCost: 90,
+    baseCost: 3,
     growth: 1.15,
     unlockAtLaps: 1,
     effect: { kind: 'speed', perLevel: 0.5 },
@@ -37,7 +37,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'betterBike',
     name: 'Racing tyres',
     description: 'Grippier rubber. Every finished lap pays more.',
-    baseCost: 150,
+    baseCost: 5,
     growth: 1.6,
     unlockAtLaps: 3,
     effect: { kind: 'xpMult', perLevel: 1.5 },
@@ -46,7 +46,7 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'slipstream',
     name: 'Slipstream',
     description: 'Tuck in behind the neighbour. Everything that rolls, rolls faster.',
-    baseCost: 900,
+    baseCost: 30,
     growth: 2.2,
     unlockAtLaps: 10,
     effect: { kind: 'speedMult', perLevel: 1.2 },
@@ -55,10 +55,10 @@ export const UPGRADES: readonly UpgradeDef[] = [
     id: 'trainingPartner',
     name: 'Training partner',
     description: 'Someone else pushes the pedals for you — with your gears on.',
-    baseCost: 2400,
+    baseCost: 80,
     growth: 1.5,
     unlockAtLaps: 20,
-    effect: { kind: 'autoTaps', perLevel: 0.5 },
+    effect: { kind: 'autoClicks', perLevel: 0.5 },
   },
 ];
 

@@ -1,7 +1,7 @@
 # IncrementalF1 — Project Plan
 
 A browser-based incremental (idle) game about riding your way from a bicycle in
-the backyard to a Formula 1 team. You start on a bike, tapping out one metre at
+the backyard to a Formula 1 team. You start on a bike, clicking out one metre at
 a time round a thirty-metre loop; **XP only arrives when you complete a lap**.
 XP buys upgrades that pedal for you and make each lap pay more, then longer
 tracks, faster machines and eventually a real car. Prize money is a second
@@ -19,14 +19,14 @@ save/state storage per user, hosting, and a milestone roadmap.
 ### 1.1 Core loop
 
 ```
-tap (+1 m)  →  distance covers a lap  →  lap completes → earns XP →  buy upgrades
+click (+1 m)  →  distance covers a lap  →  lap completes → earns XP →  buy upgrades
     ↑                    ↑                                                   │
     │        auto-pedal adds m/s on its own                                  │
     └──────────────── upgrades: more m/s, more XP per lap ───────────────────┘
                  occasionally: end season, prestige, restart stronger
 ```
 
-The important rule: **a tap is distance, not XP.** Taps move the bike; only
+The important rule: **a click is distance, not XP.** Clicks move the bike; only
 crossing the finish line pays. Distance past the line carries into the next lap,
 so nothing a player does is ever wasted.
 
@@ -46,8 +46,15 @@ what lets a race be worth something no amount of riding can buy.
 
 ### 1.3 Tracks and upgrades
 
-A **track** is a distance and an XP rate. The backyard loop is 30 m at 1 XP a
-metre, so a lap pays 30 XP; adding one is a data row, not code.
+A **track** is a distance and an XP rate. The backyard loop is 30 m at 1/30 XP a
+metre, so a lap pays exactly 1 XP; adding one is a data row, not code. Pricing a
+lap at 1 XP is what lets every cost in the shed be read as a count of laps.
+
+**A lap always pays a whole number of XP.** `xpPerLap` rounds the multiplied
+payout up, because the game shows no fractions anywhere: left alone, a ×1.5 on
+a 1 XP lap would pay 1.5 and read as the same 1 XP it paid before, so a bought
+upgrade would look like it did nothing. Ceiling gives 1, 2, 3, 4, 6, 8, 12 —
+the 1.5 curve underneath, with every level landing somewhere visible.
 
 Because a lap is worth the metres it takes to ride it, XP _per second_ works out
 to `m/s × xpPerMetre` — the lap distance cancels. A longer track therefore pays
@@ -58,12 +65,28 @@ promotion**; length alone is not a progression lever.
 Every **upgrade** is repeatable — cost grows per level, the effect stacks:
 
 ```
-cost(n) = baseCost × growth^n                 growth ≈ 1.07–2.2
-effect:   { kind: 'speed',     perLevel }     +m/s of automatic pedalling
-          { kind: 'xpMult',    perLevel }     ×XP per completed lap
-          { kind: 'tapMetres', perLevel }     +m per push of the pedals
-          { kind: 'speedMult', perLevel }     ×the whole automatic speed
-          { kind: 'autoTaps',  perLevel }     +taps/s, each worth metresPerTap
+cost(n) = max(round(baseCost × growth^n), baseCost + n)   growth ≈ 1.07–2.2
+effect:   { kind: 'speed',       perLevel }   +m/s of automatic pedalling
+          { kind: 'xpMult',      perLevel }   ×XP per completed lap
+          { kind: 'clickMetres', perLevel }   +m per click
+          { kind: 'speedMult',   perLevel }   ×the whole automatic speed
+          { kind: 'autoClicks',  perLevel }   +clicks/s, each worth metresPerClick
+```
+
+**A price is a whole number of XP too**, and no two rungs are ever the same
+price. Rounding the curve alone would not manage that: a shallow growth on a
+small base steps by less than an XP at first — auto-pedal's 1.15 on a base of 3
+goes 3, 3.45, 3.97, 4.56 — and would quote 3, 3, 4, 5. Hence the `baseCost + n`
+floor: every level costs at least one XP more than the one below it. It bites
+only while the curve is flatter than an XP a level, and the geometric term
+overtakes it once and never falls back, so the two are one rising ladder.
+
+```
+  bigger gears   1, 2, 4, 7, 13, 25, 47, 89, 170, 323
+  auto-pedal     3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 21
+  racing tyres   5, 8, 13, 20, 33, 52, 84, 134, 215
+  slipstream     30, 66, 145, 319, 703, 1546
+  training p.    80, 120, 180, 270, 405, 608
 ```
 
 Upgrades are also **revealed by laps driven**, not all at once: each one carries
@@ -102,7 +125,7 @@ Ladder (early → late), with the lap each one appears at:
 
 | Milestone                      | Target time   |
 | ------------------------------ | ------------- |
-| First lap (30 taps)            | < 10 seconds  |
+| First lap (30 clicks)          | < 10 seconds  |
 | First upgrade (bigger gears)   | on that lap   |
 | Second track unlocked          | ~5 minutes    |
 | First race                     | ~5 minutes    |
@@ -186,12 +209,12 @@ It exposes:
 ```ts
 addDistance(state: GameState, metres: number): GameState  // the one core mutation
 tick(state: GameState, dtSeconds: number): GameState      // = addDistance(state, m/s × dt)
-pedal(state): GameState                                   // = addDistance(state, 1)
+click(state): GameState                                   // = addDistance(state, 1)
 buyUpgrade(state, upgradeId, amount): GameState           // player actions
 prestige(state): GameState
 ```
 
-A tap and a second of auto-pedalling both go through `addDistance`, so manual
+A click and a second of auto-pedalling both go through `addDistance`, so manual
 and idle play can never drift apart or pay differently.
 
 Benefits:
@@ -223,7 +246,7 @@ as typed objects, not in code branches. Balancing = editing data, not logic.
 
 ```ts
 export const TRACKS: TrackDef[] = [
-  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, xpPerMetre: 1 },
+  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, xpPerMetre: 1 / 30 },
   // a longer track is one more row
 ];
 
@@ -231,14 +254,14 @@ export const UPGRADES: UpgradeDef[] = [
   // unlockAtLaps hides an upgrade until that many laps have been completed.
   {
     id: 'biggerGears',
-    baseCost: 25,
+    baseCost: 1,
     growth: 1.9,
     unlockAtLaps: 0,
-    effect: { kind: 'tapMetres', perLevel: 1 },
+    effect: { kind: 'clickMetres', perLevel: 1 },
   },
   {
     id: 'autoPedal',
-    baseCost: 90,
+    baseCost: 3,
     growth: 1.15,
     unlockAtLaps: 1,
     effect: { kind: 'speed', perLevel: 0.5 },
@@ -525,6 +548,134 @@ standing in the infield, and a red bike going round it with nobody on it.
 - Four directions were drawn and narrowed to this one over two rounds; the
   sources are under `.design/backyard-track/`.
 - 85 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.6.6 — XP priced in laps — done
+
+Status: shipped. The economy was thirty times too loud for a garden: a lap
+paid 30 XP and the first upgrade cost 25, which made every number a big one
+before the player had done anything. **A lap now pays 1 XP and bigger gears
+costs 1 XP**, so the opening move is still "finish one lap, buy the thing" —
+with prices you can read.
+
+- `xpPerMetre` on the backyard loop is `1 / 30`, chosen so 30 m comes out at
+  exactly 1 XP. Every cost in the shed divided by the same 30 — 1, 3, 5, 30,
+  80 — so **nothing changed in laps**: the pacing of the whole ladder is
+  untouched, only the units are.
+- A cost is now readable as a count of laps, which is the unit the player
+  actually feels. The follow-on for later tracks is unchanged: a longer lap is
+  not a promotion by itself, `xpPerMetre` still has to go up.
+- Save v4 with `migrateV3toV4`, dividing an old XP balance by 30 so a returning
+  save is worth the same laps it was worth before. A v1 save now walks all
+  three steps: money ×6, then ÷30.
+- 86 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.6.7 — The track is the button — done
+
+Status: shipped. The PEDAL button is gone. **The yard itself is what you
+click**: one click anywhere on the drawn track covers `metresPerClick` metres,
+which puts the action on the thing it acts on instead of on a slab underneath
+it.
+
+- `ui/PedalButton.tsx` was deleted. `ui/TrackMap.tsx` wraps the scene in a
+  real `<button>` — so keyboard focus, Enter/Space and screen readers all work
+  as they did — labelled "Click the track to ride". `select-none` and
+  `touch-manipulation` keep fast repeated clicking from selecting the artwork
+  or waiting on a double-tap-to-zoom gesture.
+- The two readouts the button carried moved into a second row under the map:
+  what one click is worth now (`+1 m per click`) and the lifetime metres you
+  covered yourself.
+- **"Tap" is now "click" everywhere**, in the code as well as on screen:
+  `pedal()` → `click()`, `metresPerTap` → `metresPerClick`,
+  `BASE_TAP_METRES` → `BASE_CLICK_METRES`, the effect kinds `tapMetres` and
+  `autoTaps` → `clickMetres` and `autoClicks`, and `totalTapsM` →
+  `totalClicksM`. The bicycle flavour text still talks about pedals, because
+  that is what the bike does with the metres.
+- Save v5 with `migrateV4toV5`, which renames the one stored field. A v4 save
+  missing it is refused rather than silently restarted at zero.
+- 87 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.6.8 — Six o'clock — done
+
+Status: shipped. The yard moved from flat midday to **late afternoon**, from
+design direction `2a` of a second round of four. The read now comes from light
+and cast shadows rather than from markings on the ground.
+
+- A single flat wedge of shade across the lawn gives the light a direction —
+  a low sun off the upper right — and the shed throws a long shadow down-left
+  to match. The lawn and the shed run warmer, and the window is lit from
+  inside.
+- **The light-brown dust pass on the lap is gone**: the dirt loop is one flat
+  tone, two strokes instead of three. The 14 flower clumps went with it — pale
+  petals against the warmer lawn read as speckle rather than planting.
+- The bike was upgraded to match: brighter frame, a cream stripe on the top
+  tube, chrome rims with two crossed spokes a wheel, and a longer shadow
+  thrown ahead of it.
+- Scenery only. No geometry, no view box, no engine, no save change — the
+  stadium maths and every `data-testid` are untouched, and the design handoff
+  said as much. `pnpm check` and the e2e suite passed without an edit.
+
+### M1.6.9 — One motion, not a hop — done
+
+Status: shipped. The bike used to teleport: a click adds a whole metre, a
+twelfth of the yard, and the simulation only moves ten times a second anyway,
+so every click read as a skip ahead. **The drawn bike now rides an eased
+distance** and covers that metre in one motion.
+
+- `util/smoothing.ts` is the whole of it: one pure `approach()` step of
+  exponential smoothing, framerate-independent (`1 - e^(-dt/tau)`), so the
+  glide looks the same at 30 fps as at 144. `ui/useGlide.ts` runs it once per
+  animation frame; the simulation is untouched and stays the truth, this is
+  only how the truth is arrived at on screen.
+- What is eased is **lifetime metres**, not metres into the lap: easing a value
+  that resets at the line would drag the bike backwards across the yard on
+  every rollover, which is the same trap the "no CSS transition" comment in
+  `TrackMap.tsx` has always warned about.
+- Two escapes from the easing, both in `approach()`: a target behind the drawn
+  position (a reset or a reload) and a gap bigger than a lap (offline
+  catch-up) are jumped rather than ridden out. It settles exactly on the
+  target and then stops setting state, so an idle backyard re-renders nothing.
+- **The wheels turn with the ground they cover** — the rolling relation off
+  the wheel radius rather than a loop on a timer, so they can never spin at a
+  speed the bike is not travelling at. `BackyardScene` is memoised, since the
+  bike now redraws at frame rate and the yard behind it never changes.
+- 94 Vitest unit tests, 7 Playwright e2e tests.
+
+### M1.6.10 — Whole numbers, and a growth signal you can read — done
+
+Status: shipped. Pricing a lap at 1 XP made the numbers small, but it also put
+everything interesting into the decimals: a lap paid 1.5 XP with tyres on, gears
+cost 3.61, and the header sat at `+0.02/s` for the whole early game. **Nothing
+the game shows is a fraction any more.** The simulation still carries them —
+`bulkCost` and the cost curve are untouched — only the screen refuses them.
+
+- `util/formatNumber.ts` renders whole numbers: grouped digits up to a million
+  (`1,303`), the letter suffixes above it. It rounds to the **nearest**, which
+  is exact for every amount in the game and is also the only safe direction: a
+  Decimal holds a mantissa and an exponent and reconstructs 848,430 as
+  `848429.9999999999`, so flooring would quote a price an XP under the one the
+  buy button charges.
+- `costOf` quotes prices on **whole, never-repeating rungs**:
+  `max(round(baseCost × growth^level), baseCost + level)`. Rounding alone was
+  not enough — auto-pedal's 1.15 growth on a base of 3 steps by less than an XP
+  for its first several levels, so consecutive rungs rounded to the same price
+  and the ladder read as stuck. The `baseCost + level` floor carries it until
+  the curve is steep enough to take over, which it does once and for good. No
+  base cost or growth factor changed; auto-pedal now reads 3, 4, 5, 6, 7, 8, 9,
+  10, 11, 12, 13, 14, 16, 18, 21. `bulkCost` sums the rungs rather than the
+  closed-form series, since the rungs are what is actually charged.
+- `xpPerLap` now rounds **up** to a whole XP. This is the growth signal itself:
+  a ×1.5 on a 1 XP lap pays 1.5, which reads as the same 1 XP it paid before,
+  so the first level of racing tyres looked like it did nothing. The payout
+  ladder is now 1, 2, 3, 4, 6, 8, 12 — the 1.5 curve underneath, rounded once at
+  the end rather than compounded, and every level lands somewhere visible.
+- The header counts **per minute**, `xpPerMinute`. Per second the first level of
+  auto-pedal earns 0.0167 XP, which is `+0/s` on a whole-number readout; per
+  minute it is `+1/min` from the moment it is bought.
+- `effectNow` drops trailing zeros from a multiplier: `×1`, `×1.5`, `×2.25`. A
+  factor is not an amount, so `×1.5` stays — rounding it would misstate what
+  the upgrade does — but `×1.00` had no reason to sit next to a whole balance.
+- No save change: the balance's units did not move, so v5 still loads as v5.
+- 100 Vitest unit tests, 7 Playwright e2e tests.
 
 ### M1.7 — The rest of the ladder (next)
 

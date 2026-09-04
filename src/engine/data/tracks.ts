@@ -9,7 +9,9 @@ export const TRACKS: readonly TrackDef[] = [
     name: 'Backyard loop',
     description: 'Once around the garden, past the shed and back.',
     lapDistanceM: 30,
-    xpPerMetre: 1,
+    // A lap of the backyard is worth exactly 1 XP: the smallest interesting
+    // number, so every price in the shed reads as a count of laps.
+    xpPerMetre: 1 / 30,
   },
 ];
 

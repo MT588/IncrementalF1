@@ -1,13 +1,13 @@
 import type { UpgradeDef } from '../types';
-import { BASE_TAP_METRES } from '../formulas';
+import { BASE_CLICK_METRES } from '../formulas';
 
 /** Every player-facing string lives here so a translation layer can replace this file later. */
 export const STRINGS = {
   GAME_NAME: 'IncrementalF1',
   TAGLINE: 'Start in the backyard. Finish on the grid.',
   XP_LABEL: 'XP',
-  PER_SECOND: '/s',
-  PEDAL: 'Pedal',
+  PER_MINUTE: '/min',
+  CLICK_TRACK: 'Click the track to ride',
   LAPS_DRIVEN: 'Laps',
   LAP_PAYS: 'A lap pays',
   SHED: 'Shed',
@@ -31,9 +31,9 @@ export function nextUnlockHint(atLaps: number): string {
   return `Unlocked at ${atLaps} ${atLaps === 1 ? 'lap' : 'laps'} driven`;
 }
 
-/** How far one tap carries right now — the gears change this, so it cannot be a constant. */
-export function pedalHint(metresPerTap: number): string {
-  return `+${metresPerTap} m per tap`;
+/** How far one click carries right now — the gears change this, so it cannot be a constant. */
+export function clickHint(metresPerClick: number): string {
+  return `+${metresPerClick} m per click`;
 }
 
 /**
@@ -46,14 +46,14 @@ export function effectDelta(def: UpgradeDef): string {
   switch (effect.kind) {
     case 'speed':
       return `+${effect.perLevel} m/s`;
-    case 'tapMetres':
+    case 'clickMetres':
       return `+${effect.perLevel} m`;
     case 'xpMult':
       return `×${effect.perLevel} XP`;
     case 'speedMult':
       return `×${effect.perLevel} speed`;
-    case 'autoTaps':
-      return `+${effect.perLevel} taps/s`;
+    case 'autoClicks':
+      return `+${effect.perLevel} clicks/s`;
   }
 }
 
@@ -66,13 +66,22 @@ export function effectNow(def: UpgradeDef, level: number): string {
   switch (effect.kind) {
     case 'speed':
       return `${(effect.perLevel * level).toFixed(1)} m/s`;
-    case 'tapMetres':
-      return `${BASE_TAP_METRES + effect.perLevel * level} m per tap`;
+    case 'clickMetres':
+      return `${BASE_CLICK_METRES + effect.perLevel * level} m per click`;
     case 'xpMult':
-      return `×${(effect.perLevel ** level).toFixed(2)} XP per lap`;
+      return `${multiplier(effect.perLevel ** level)} XP per lap`;
     case 'speedMult':
-      return `×${(effect.perLevel ** level).toFixed(2)} auto-speed`;
-    case 'autoTaps':
-      return `${(effect.perLevel * level).toFixed(1)} taps a second`;
+      return `${multiplier(effect.perLevel ** level)} auto-speed`;
+    case 'autoClicks':
+      return `${(effect.perLevel * level).toFixed(1)} clicks a second`;
   }
+}
+
+/**
+ * A compounded multiplier, to two decimals but with the trailing zeros dropped:
+ * ×1, ×1.5, ×2.25. A factor is not an amount — the game shows no fractional XP,
+ * but rounding ×1.5 to ×2 would be a lie about what the upgrade does.
+ */
+function multiplier(value: number): string {
+  return `×${Number(value.toFixed(2))}`;
 }

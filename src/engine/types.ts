@@ -7,6 +7,9 @@ export interface GameState {
   /**
    * Experience, the currency every upgrade is bought with. Earned only by
    * completing a lap, and the amount is derived from the metres of that lap.
+   *
+   * Carries fractions — a multiplied lap can pay 337.5 — but never shows them:
+   * see util/formatNumber, which rounds every amount on its way to the screen.
    */
   xp: Decimal;
   /**
@@ -20,8 +23,8 @@ export interface GameState {
   lapProgressM: number;
   /** Completed laps, lifetime. */
   totalLaps: number;
-  /** Metres pedalled by hand, lifetime. */
-  totalTapsM: number;
+  /** Metres covered by the player's own clicks, lifetime. */
+  totalClicksM: number;
   /** Owned level per upgrade. 0 means not bought. */
   upgrades: Record<UpgradeId, number>;
   /** ms since epoch of the last simulated instant. Drives offline catch-up. */
@@ -41,6 +44,9 @@ export interface TrackDef {
    * pays `lapDistanceM × xpPerMetre`, so longer tracks pay more per lap.
    * Note that XP *per second* does not depend on lap distance (it cancels),
    * so a later track only feels like a promotion if this number goes up.
+   *
+   * Pick it so the base lap payout lands on a whole number: `xpPerLap` rounds
+   * to one, because the shed's prices are set against it.
    */
   xpPerMetre: number;
 }
@@ -51,12 +57,12 @@ export type UpgradeEffect =
   | { kind: 'speed'; perLevel: number }
   /** Multiplies the XP earned per completed lap. */
   | { kind: 'xpMult'; perLevel: number }
-  /** Adds metres to every push of the pedals, by hand or by the training partner. */
-  | { kind: 'tapMetres'; perLevel: number }
+  /** Adds metres to every click, the player's own or the training partner's. */
+  | { kind: 'clickMetres'; perLevel: number }
   /** Multiplies the total automatic speed, however that speed was earned. */
   | { kind: 'speedMult'; perLevel: number }
-  /** Adds automatic taps per second, each worth a full metresPerTap. */
-  | { kind: 'autoTaps'; perLevel: number };
+  /** Adds automatic clicks per second, each worth a full metresPerClick. */
+  | { kind: 'autoClicks'; perLevel: number };
 
 export interface UpgradeDef {
   id: UpgradeId;

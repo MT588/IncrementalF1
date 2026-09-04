@@ -1,7 +1,7 @@
 import { STARTING_TRACK_ID } from '../data/tracks';
 import { parseAmount } from './amount';
 
-export const LATEST_SAVE_VERSION = 3;
+export const LATEST_SAVE_VERSION = 5;
 
 type RawSave = Record<string, unknown>;
 /** Returns the save one version newer, or null when it is too broken to convert. */
@@ -61,9 +61,35 @@ const migrateV2toV3: Migration = (raw) => {
   };
 };
 
+/**
+ * v3 paid 30 XP a lap on the backyard loop; v4 pays 1, with every price in the
+ * shed divided by the same 30 so nothing changes in laps. An old balance is
+ * converted at that ratio and is worth exactly the laps it was worth before.
+ */
+const migrateV3toV4: Migration = (raw) => {
+  if (!isRecord(raw.state)) return null;
+  const old = raw.state;
+  const xp = parseAmount(old.xp);
+  if (!xp) return null;
+  return { ...raw, version: 4, state: { ...old, xp: xp.div(30).toString() } };
+};
+
+/**
+ * v4 called the manual action a tap; v5 calls it a click, and the lifetime
+ * counter of self-pedalled metres was renamed with it. Nothing but the name
+ * changes, so an absent old field is left absent for `fromSave` to refuse.
+ */
+const migrateV4toV5: Migration = (raw) => {
+  if (!isRecord(raw.state)) return null;
+  const { totalTapsM, ...rest } = raw.state;
+  return { ...raw, version: 5, state: { ...rest, totalClicksM: totalTapsM } };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
+  3: migrateV3toV4,
+  4: migrateV4toV5,
 };
 
 /**

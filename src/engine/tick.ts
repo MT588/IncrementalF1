@@ -7,7 +7,7 @@ export const MAX_CATCH_UP_SECONDS = 8 * 60 * 60;
 
 /**
  * Move the bike `metres` further round the track, paying out every lap that
- * completes on the way. Both a tap and a second of auto-pedalling go through
+ * completes on the way. Both a click and a second of auto-pedalling go through
  * here, so the two can never drift apart. This is the only place any currency
  * is earned — `money` is untouched until races arrive.
  */

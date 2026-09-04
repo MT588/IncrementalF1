@@ -1,13 +1,13 @@
 import { STRINGS } from '@/engine/data/strings';
-import { xpPerSecond } from '@/engine/formulas';
+import { xpPerMinute } from '@/engine/formulas';
 import { useGameStore } from '@/store/gameStore';
 import { formatNumber, formatXp } from '@/util/formatNumber';
 
 export function Header() {
   // Select the state object itself: selectors must return stable references, and
-  // xpPerSecond() would hand back a fresh Decimal on every call.
+  // xpPerMinute() would hand back a fresh Decimal on every call.
   const state = useGameStore((s) => s.state);
-  const perSecond = xpPerSecond(state);
+  const perMinute = xpPerMinute(state);
 
   return (
     <header className="border-line flex items-end justify-between border-b-2 pb-3">
@@ -24,8 +24,8 @@ export function Header() {
           {formatXp(state.xp)}
         </p>
         <p data-testid="rate" className="text-sector-green mt-1 text-sm">
-          +{formatNumber(perSecond)}
-          {STRINGS.PER_SECOND}
+          +{formatNumber(perMinute)}
+          {STRINGS.PER_MINUTE}
         </p>
       </div>
     </header>
