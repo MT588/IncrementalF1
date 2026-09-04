@@ -1,15 +1,15 @@
 import type { GameState } from './types';
 import { getTrack } from './data/tracks';
-import { autoSpeedMps, xpPerLap } from './formulas';
+import { speedMps, xpPerLap } from './formulas';
 
 /** Default cap on offline catch-up: 8 hours. */
 export const MAX_CATCH_UP_SECONDS = 8 * 60 * 60;
 
 /**
- * Move the bike `metres` further round the track, paying out every lap that
- * completes on the way. Both a click and a second of auto-pedalling go through
- * here, so the two can never drift apart. This is the only place any currency
- * is earned — `money` is untouched until races arrive.
+ * Move the kart `metres` further round the track, paying out every lap that
+ * completes on the way. Every metre the game ever covers goes through here,
+ * live or caught up offline, so the two can never drift apart. This is the only
+ * place any currency is earned — `money` is untouched until races arrive.
  */
 export function addDistance(state: GameState, metres: number): GameState {
   if (!(metres > 0)) return state;
@@ -30,7 +30,7 @@ export function addDistance(state: GameState, metres: number): GameState {
 /** Advance the simulation by `dtSeconds`. Does not touch lastTickAt; callers set that. */
 export function tick(state: GameState, dtSeconds: number): GameState {
   if (dtSeconds <= 0) return state;
-  return addDistance(state, autoSpeedMps(state) * dtSeconds);
+  return addDistance(state, speedMps(state) * dtSeconds);
 }
 
 export interface AdvanceResult {

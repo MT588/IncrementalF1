@@ -17,7 +17,7 @@ export interface Stadium {
 }
 
 export interface TrackPoint extends Point {
-  /** Which way the rider is travelling across the screen: 1 right, -1 left. */
+  /** Which way the kart is travelling across the screen: 1 right, -1 left. */
   facing: 1 | -1;
 }
 
@@ -47,7 +47,7 @@ export function stadiumPath(track: Stadium): string {
  * The point `fraction` of the way round, starting at the start line at top
  * centre and running clockwise. Pure maths rather than `getPointAtLength`, so
  * the map needs no DOM and stays testable; walking the shape by arc length
- * rather than by angle is what keeps the rider's speed even through the bends.
+ * rather than by angle is what keeps the kart's speed even through the bends.
  *
  * Fractions outside a single lap wrap, so a full lap lands back on the line.
  */
@@ -86,7 +86,7 @@ const HALF_PI = Math.PI / 2;
 
 /**
  * A point on one of the bends. The tangent there is `(-sin, cos)`, so the
- * rider turns to face the other way at the widest point of the bend rather
+ * kart turns to face the other way at the widest point of the bend rather
  * than snapping round when the straight begins.
  */
 function onBend(cx: number, cy: number, radius: number, angle: number): TrackPoint {

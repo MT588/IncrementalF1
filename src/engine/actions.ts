@@ -1,22 +1,14 @@
 import type { GameState } from './types';
-import { bulkCost, isUnlocked, metresPerClick } from './formulas';
-import { addDistance } from './tick';
+import { bulkCost, isUnlocked } from './formulas';
 import { getUpgrade } from './data/upgrades';
 import type { UpgradeId } from './data/upgrades';
 
 /**
- * The manual action: one click on the track. XP only arrives when a lap
- * completes. How far a click carries depends on the gears (see metresPerClick).
- */
-export function click(state: GameState): GameState {
-  const metres = metresPerClick(state);
-  const moved = addDistance(state, metres);
-  return { ...moved, totalClicksM: state.totalClicksM + metres };
-}
-
-/**
  * Buy `amount` levels of an upgrade with XP. Returns the same state object when
  * the upgrade is unaffordable, or still locked behind its lap count.
+ *
+ * The only action there is. The kart drives itself, so choosing what to spend a
+ * lap's XP on is the whole of what the player does.
  */
 export function buyUpgrade(state: GameState, id: UpgradeId, amount = 1): GameState {
   if (amount <= 0) return state;

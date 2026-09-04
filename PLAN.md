@@ -1,13 +1,17 @@
 # IncrementalF1 — Project Plan
 
-A browser-based incremental (idle) game about riding your way from a bicycle in
-the backyard to a Formula 1 team. You start on a bike, clicking out one metre at
-a time round a thirty-metre loop; **XP only arrives when you complete a lap**.
-XP buys upgrades that pedal for you and make each lap pay more, then longer
-tracks, faster machines and eventually a real car. Prize money is a second
-currency, paid for finishing races rather than for distance. At the end of a
-"season" you can reset for permanent bonuses (prestige) and climb the
-constructors' ladder.
+A browser-based incremental (idle) game about driving your way from a go-kart in
+the backyard to a Formula 1 team. You start in a kart doing a metre a second
+round a ten-metre loop, with nothing to press: **XP only arrives when you
+complete a lap**. XP buys upgrades that make the kart faster and each lap worth
+more, then longer tracks, bigger engines and eventually a single-seater. Prize
+money is a second currency, paid for finishing races rather than for distance.
+At the end of a "season" you can reset for permanent bonuses (prestige) and
+climb the constructors' ladder.
+
+Karting is where every F1 driver actually starts, which is why the game does
+too: a kart is already a racing machine, so racing against an AI field can open
+while the player is still in the backyard rather than waiting on a "real car".
 
 This document is the full plan: game design, technology choices, architecture,
 save/state storage per user, hosting, and a milestone roadmap.
@@ -19,16 +23,23 @@ save/state storage per user, hosting, and a milestone roadmap.
 ### 1.1 Core loop
 
 ```
-click (+1 m)  →  distance covers a lap  →  lap completes → earns XP →  buy upgrades
-    ↑                    ↑                                                   │
-    │        auto-pedal adds m/s on its own                                  │
-    └──────────────── upgrades: more m/s, more XP per lap ───────────────────┘
+kart rolls at m/s  →  distance covers a lap  →  lap completes → earns XP →  buy upgrades
+    ↑                                                                          │
+    └──────────────── upgrades: more m/s, more XP per lap ─────────────────────┘
                  occasionally: end season, prestige, restart stronger
 ```
 
-The important rule: **a click is distance, not XP.** Clicks move the bike; only
-crossing the finish line pays. Distance past the line carries into the next lap,
-so nothing a player does is ever wasted.
+The important rule: **there is no manual action.** The kart drives itself from
+the first second, at `BASE_SPEED_MPS` before a single upgrade; the only thing
+the player does is decide what a lap's XP is spent on. Distance past the line
+carries into the next lap, so no metre is ever thrown away, and an idle tab and
+an attentive one earn exactly the same.
+
+Nothing is clicked because nothing should have to be. An incremental game whose
+opening move is thirty clicks asks for attention it has not earned yet, and the
+upgrades that then exist to make clicking better — bigger gears, an auto-clicker
+— are a ladder built on top of a chore. Starting at a metre a second cuts all of
+that and leaves the real decision: which upgrade next.
 
 ### 1.2 Resources
 
@@ -42,13 +53,15 @@ so nothing a player does is ever wasted.
 
 XP is the distance currency and the only one that exists today; money is the
 event currency and stays at zero until races arrive in M3. Keeping them apart is
-what lets a race be worth something no amount of riding can buy.
+what lets a race be worth something no amount of driving can buy.
 
 ### 1.3 Tracks and upgrades
 
-A **track** is a distance and an XP rate. The backyard loop is 30 m at 1/30 XP a
+A **track** is a distance and an XP rate. The backyard loop is 10 m at 1/10 XP a
 metre, so a lap pays exactly 1 XP; adding one is a data row, not code. Pricing a
-lap at 1 XP is what lets every cost in the shed be read as a count of laps.
+lap at 1 XP is what lets every cost in the shed be read as a count of laps, and
+ten metres is what puts the first of those laps ten seconds after the page
+loads.
 
 **A lap always pays a whole number of XP.** `xpPerLap` rounds the multiplied
 payout up, because the game shows no fractions anywhere: left alone, a ×1.5 on
@@ -56,7 +69,7 @@ a 1 XP lap would pay 1.5 and read as the same 1 XP it paid before, so a bought
 upgrade would look like it did nothing. Ceiling gives 1, 2, 3, 4, 6, 8, 12 —
 the 1.5 curve underneath, with every level landing somewhere visible.
 
-Because a lap is worth the metres it takes to ride it, XP _per second_ works out
+Because a lap is worth the metres it takes to drive it, XP _per second_ works out
 to `m/s × xpPerMetre` — the lap distance cancels. A longer track therefore pays
 the same per second as a short one, just in larger and rarer chunks, which feels
 worse rather than better. **Later tracks have to raise `xpPerMetre` to be a
@@ -66,12 +79,13 @@ Every **upgrade** is repeatable — cost grows per level, the effect stacks:
 
 ```
 cost(n) = max(round(baseCost × growth^n), baseCost + n)   growth ≈ 1.07–2.2
-effect:   { kind: 'speed',       perLevel }   +m/s of automatic pedalling
-          { kind: 'xpMult',      perLevel }   ×XP per completed lap
-          { kind: 'clickMetres', perLevel }   +m per click
-          { kind: 'speedMult',   perLevel }   ×the whole automatic speed
-          { kind: 'autoClicks',  perLevel }   +clicks/s, each worth metresPerClick
+effect:   { kind: 'speed',     perLevel }   +m/s on the kart's speed
+          { kind: 'xpMult',    perLevel }   ×XP per completed lap
+          { kind: 'speedMult', perLevel }   ×the whole speed, base included
 ```
+
+Three kinds, and every one of them is legible on the two numbers under the
+track: how fast the kart is going, and what a lap pays.
 
 **A price is a whole number of XP too**, and no two rungs are ever the same
 price. Rounding the curve alone would not manage that: a shallow growth on a
@@ -82,15 +96,14 @@ only while the curve is flatter than an XP a level, and the geometric term
 overtakes it once and never falls back, so the two are one rising ladder.
 
 ```
-  bigger gears   1, 2, 4, 7, 13, 25, 47, 89, 170, 323
-  auto-pedal     3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 16, 18, 21
+  throttle       1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 18, 23, 30, 39
   racing tyres   5, 8, 13, 20, 33, 52, 84, 134, 215
+  bigger engine  12, 20, 35, 59, 100, 170, 290, 492
   slipstream     30, 66, 145, 319, 703, 1546
-  training p.    80, 120, 180, 270, 405, 608
 ```
 
 Upgrades are also **revealed by laps driven**, not all at once: each one carries
-an `unlockAtLaps` and stays out of the shed until the player has ridden that
+an `unlockAtLaps` and stays out of the shed until the kart has driven that
 far. The gate is a reveal rather than a block — it is set to land shortly before
 the upgrade is affordable, so the player meets one new thing at a time instead
 of a wall of five. Gating on laps rather than on an XP balance ties the reveal
@@ -98,23 +111,27 @@ to something they did.
 
 Ladder (early → late), with the lap each one appears at:
 
-1. **Bigger gears** – more metres per push of the pedals. _0 laps, M1.5_
-2. **Auto-pedal** – the bike keeps rolling on its own, slowly. _1 lap, M1_
-3. **Racing tyres** – every finished lap pays more. _3 laps, M1_
-4. **Slipstream** – multiplies the whole automatic speed. _10 laps, M1.5_
-5. **Training partner** – pedals for you, with your gears on. _20 laps, M1.5_
-6. **Longer tracks** – the park, the local circuit, a real track.
-7. **A moped, then a car** – large jumps in m/s and payout.
-8. **Mechanic / test driver** – staff who ride laps for you.
-9. **Wind tunnel, simulator** – produce RP.
-10. **Second car** – doubles everything, very expensive.
-11. **Factory** – global multiplier, late game.
+1. **Throttle** – +0.5 m/s. The first upgrade, and the cheapest. _0 laps, M1.7_
+2. **Racing tyres** – every finished lap pays more. _3 laps, M1.7_
+3. **Bigger engine** – +2 m/s, a proper step rather than a nudge. _8 laps, M1.7_
+4. **Slipstream** – multiplies the whole speed, base included. _15 laps, M1.7_
+5. **Longer tracks** – the car park, the local kart circuit.
+6. **Bigger engine classes, then a junior single-seater** – large jumps in m/s
+   and payout.
+7. **Mechanic / test driver** – staff who drive laps for you.
+8. **Wind tunnel, simulator** – produce RP.
+9. **Second car** – doubles everything, very expensive.
+10. **Factory** – global multiplier, late game.
 
 ### 1.4 Races and seasons
 
+Races are specified in a plan of their own; what matters here is that a kart is
+already a racing machine, so they are meant to open **during the backyard era**
+rather than waiting on a car.
+
 - A **race** is a timed event (e.g. every 5 minutes of real time, or when a lap
-  counter hits a target). Your lap speed vs. AI field determines finishing
-  position → payout + reputation.
+  counter hits a target). Your lap speed vs. an AI field of bots determines
+  finishing position → payout + reputation.
 - A **season** is 20 races. Finishing a season lets you **prestige**: reset
   XP, upgrades, and RP, but keep Championship points which buy permanent
   boosts (starting cash, +% output, unlock automation).
@@ -125,8 +142,8 @@ Ladder (early → late), with the lap each one appears at:
 
 | Milestone                      | Target time   |
 | ------------------------------ | ------------- |
-| First lap (30 clicks)          | < 10 seconds  |
-| First upgrade (bigger gears)   | on that lap   |
+| First lap (10 m at 1 m/s)      | 10 seconds    |
+| First upgrade (throttle)       | on that lap   |
 | Second track unlocked          | ~5 minutes    |
 | First race                     | ~5 minutes    |
 | First prestige                 | 30–60 minutes |
@@ -135,6 +152,7 @@ Ladder (early → late), with the lap each one appears at:
 
 ### 1.6 Offline progress
 
+The kart never stops, so this is the same code path as being watched.
 When the player comes back, the game simulates the elapsed time (capped, e.g.
 8 hours, extendable via an upgrade). This is essential for an idle game.
 
@@ -209,13 +227,12 @@ It exposes:
 ```ts
 addDistance(state: GameState, metres: number): GameState  // the one core mutation
 tick(state: GameState, dtSeconds: number): GameState      // = addDistance(state, m/s × dt)
-click(state): GameState                                   // = addDistance(state, 1)
-buyUpgrade(state, upgradeId, amount): GameState           // player actions
+buyUpgrade(state, upgradeId, amount): GameState           // the only player action
 prestige(state): GameState
 ```
 
-A click and a second of auto-pedalling both go through `addDistance`, so manual
-and idle play can never drift apart or pay differently.
+Live ticks and offline catch-up both go through `addDistance`, so a watched tab
+and a closed one can never drift apart or pay differently.
 
 Benefits:
 
@@ -246,25 +263,25 @@ as typed objects, not in code branches. Balancing = editing data, not logic.
 
 ```ts
 export const TRACKS: TrackDef[] = [
-  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 30, xpPerMetre: 1 / 30 },
+  { id: 'backyard', name: 'Backyard loop', lapDistanceM: 10, xpPerMetre: 1 / 10 },
   // a longer track is one more row
 ];
 
 export const UPGRADES: UpgradeDef[] = [
   // unlockAtLaps hides an upgrade until that many laps have been completed.
   {
-    id: 'biggerGears',
+    id: 'throttle',
     baseCost: 1,
-    growth: 1.9,
+    growth: 1.3,
     unlockAtLaps: 0,
-    effect: { kind: 'clickMetres', perLevel: 1 },
+    effect: { kind: 'speed', perLevel: 0.5 },
   },
   {
-    id: 'autoPedal',
-    baseCost: 3,
-    growth: 1.15,
-    unlockAtLaps: 1,
-    effect: { kind: 'speed', perLevel: 0.5 },
+    id: 'racingTyres',
+    baseCost: 5,
+    growth: 1.6,
+    unlockAtLaps: 3,
+    effect: { kind: 'xpMult', perLevel: 1.5 },
   },
 ];
 ```
@@ -677,13 +694,57 @@ the game shows is a fraction any more.** The simulation still carries them —
 - No save change: the balance's units did not move, so v5 still loads as v5.
 - 100 Vitest unit tests, 7 Playwright e2e tests.
 
-### M1.7 — The rest of the ladder (next)
+### M1.7 — A kart, not a bicycle, and nothing to click — done
 
-- More tracks (the park, the local circuit).
+Status: shipped. Two changes that only make sense together: the bicycle became a
+**go-kart**, and the click that drove it was **deleted outright**.
+
+The theme is the reason for the first. Karting is where every F1 driver starts,
+so a kart is on the way to the grid in a way a bicycle never was — and because a
+kart is already a racing machine, races against an AI field can open while the
+player is still in the backyard, instead of waiting on the "moped, then a car"
+the old ladder needed first.
+
+The second is the reason the first was worth doing now. The bike existed to be
+pedalled, and two of its five upgrades — bigger gears and the training partner —
+existed only to make pedalling better. **The kart drives itself at 1 m/s from the
+moment the page loads**, so all of that went:
+
+- `click()`, `metresPerClick`, `BASE_CLICK_METRES`, `totalClicksM` and the effect
+  kinds `clickMetres` and `autoClicks` are gone. `autoSpeedMps` became `speedMps`
+  and starts at `BASE_SPEED_MPS` rather than at zero, so there is no state in
+  which the game is not moving. `buyUpgrade` is the only player action left.
+- **The backyard loop is 10 m**, at 1/10 XP a metre, so a lap is still worth
+  exactly 1 XP and every price still reads as a count of laps — but the first lap
+  now lands ten seconds in rather than thirty clicks in, and the throttle is
+  affordable the moment it does.
+- The shed is **four rows**: throttle (+0.5 m/s, 1 XP, 0 laps), racing tyres
+  (×1.5 a lap, 5 XP, 3 laps), bigger engine (+2 m/s, 12 XP, 8 laps) and
+  slipstream (×1.2 speed, 30 XP, 15 laps). Additive first, multiplier after, so
+  the engine makes every later slipstream level worth more. That is a purchase
+  every ten to twenty seconds for the first two minutes.
+- The track panel is no longer a button. Its third row was the click hint and the
+  metres you covered yourself; it now reads **Speed**, which is the number the
+  two speed upgrades move and the only one the player could otherwise not see.
+- `ui/Bicycle.tsx` became `ui/Kart.tsx` — a floor pan, a nose cone, a seat and a
+  roll hoop, deliberately as plain as the bike was. The wheels still turn against
+  the ground they cover rather than on a timer, and the glide still eases the
+  drawn distance; it now smooths the ten-a-second tick steps rather than clicks.
+- Save v6 with `migrateV5toV6`: auto-pedal becomes the throttle (both +0.5 m/s),
+  the tyres are renamed, slipstream carries as it is, and bigger gears and the
+  training partner are dropped the way v1's mechanics were. A v4 save missing its
+  tap counter is now **accepted** rather than refused — the field it was missing
+  no longer exists.
+- 91 Vitest unit tests, 6 Playwright e2e tests. The e2e suite seeds a save
+  through `localStorage` instead of clicking laps out in real time.
+
+### M1.8 — The rest of the ladder (next)
+
+- More tracks (the car park, the local kart circuit).
 - Export/import save string, settings, number-notation option.
 - Offline-progress notice tuned for lap counts rather than an XP total.
 
-### M1.8 — First prestige (completes the MVP)
+### M1.9 — First prestige (completes the MVP)
 
 - A prestige unlock condition that does not need races yet (total laps or a
   XP threshold — **open decision**).
@@ -701,9 +762,10 @@ the game shows is a fraction any more.** The simulation still carries them —
 
 ### M3 — Races and seasons (2–3 weeks)
 
-- Race simulation vs AI field, reputation, sponsors.
+- Race simulation vs an AI field of bots, reputation, sponsors. Specified in a
+  plan of its own; the kart is meant to be racing well before it is replaced.
 - Season of 20 races, which becomes the prestige trigger in place of the
-  simpler M1.7 condition; Championship points shop.
+  simpler M1.9 condition; Championship points shop.
 - Automation upgrades; achievements.
 - Balance pass using simulation tests. PWA.
 

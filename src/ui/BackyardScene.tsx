@@ -44,11 +44,11 @@ const MOWN = [0, 20, 40, 60, 80, 100];
 /**
  * Everything in the backyard that does not move: the lawn, the shade the low
  * sun throws across it, the trees leaning in over two corners, the lap worn
- * down to dirt, and the shed standing in the middle of it. Only the bike is
+ * down to dirt, and the shed standing in the middle of it. Only the kart is
  * drawn on top of this.
  *
  * The lap carries no progress marking of its own — no arc, no sectors, no
- * trail. Where the bike is and the metres in the panel footer are the whole
+ * trail. Where the kart is and the metres in the panel footer are the whole
  * read.
  */
 export const BackyardScene = memo(function BackyardScene() {

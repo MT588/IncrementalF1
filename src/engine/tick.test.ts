@@ -10,31 +10,31 @@ function withLevels(levels: Partial<Record<UpgradeId, number>>, now = 0) {
 
 describe('addDistance', () => {
   it('moves without paying when the lap is not finished', () => {
-    const after = addDistance(createInitialState(0), 29);
-    expect(after.lapProgressM).toBe(29);
+    const after = addDistance(createInitialState(0), 9);
+    expect(after.lapProgressM).toBe(9);
     expect(after.totalLaps).toBe(0);
     expect(after.xp.toNumber()).toBe(0);
   });
 
   it('pays exactly one lap at the line', () => {
-    const after = addDistance(createInitialState(0), 30);
+    const after = addDistance(createInitialState(0), 10);
     expect(after.totalLaps).toBe(1);
     expect(after.lapProgressM).toBe(0);
     expect(after.xp.toNumber()).toBe(1);
   });
 
   it('pays every lap crossed and carries the remainder', () => {
-    const after = addDistance(createInitialState(0), 65);
+    const after = addDistance(createInitialState(0), 25);
     expect(after.totalLaps).toBe(2);
     expect(after.lapProgressM).toBeCloseTo(5, 9);
     expect(after.xp.toNumber()).toBe(2);
   });
 
-  it('counts from where the bike already was', () => {
-    const started = addDistance(createInitialState(0), 25);
-    const after = addDistance(started, 10);
+  it('counts from where the kart already was', () => {
+    const started = addDistance(createInitialState(0), 8);
+    const after = addDistance(started, 5);
     expect(after.totalLaps).toBe(1);
-    expect(after.lapProgressM).toBeCloseTo(5, 9);
+    expect(after.lapProgressM).toBeCloseTo(3, 9);
   });
 
   it('is a no-op for zero or negative distance', () => {
@@ -45,50 +45,54 @@ describe('addDistance', () => {
 });
 
 describe('tick', () => {
-  it('does nothing without auto-pedal, however long the tick', () => {
-    const idle = createInitialState(0);
-    expect(tick(idle, 3600)).toBe(idle);
-  });
-
-  it('covers speed x dt and completes a lap a minute at level 1', () => {
-    const after = tick(withLevels({ autoPedal: 1 }), 60);
+  it('drives a lap in ten seconds with nothing bought at all', () => {
+    // The kart moves from the first second: 1 m/s round a 10 m lap.
+    const after = tick(createInitialState(0), 10);
     expect(after.totalLaps).toBe(1);
     expect(after.lapProgressM).toBeCloseTo(0, 9);
     expect(after.xp.toNumber()).toBe(1);
   });
 
+  it('covers speed x dt, and the throttle makes that further', () => {
+    // 1.5 m/s for ten seconds: a lap and half of the next.
+    const after = tick(withLevels({ throttle: 1 }), 10);
+    expect(after.totalLaps).toBe(1);
+    expect(after.lapProgressM).toBeCloseTo(5, 9);
+    expect(after.xp.toNumber()).toBe(1);
+  });
+
   it('returns the same object when no time passes', () => {
-    const busy = withLevels({ autoPedal: 1 });
-    expect(tick(busy, 0)).toBe(busy);
+    const state = createInitialState(0);
+    expect(tick(state, 0)).toBe(state);
   });
 });
 
 describe('advanceTo', () => {
   it('simulates the elapsed gap and stamps lastTickAt', () => {
-    // 121 s at 0.5 m/s = 60.5 m = two laps with half a metre left over.
-    const { state, simulatedSeconds } = advanceTo(withLevels({ autoPedal: 1 }, 1000), 122_000);
+    // 121 s at 1 m/s = 121 m = twelve laps with a metre left over.
+    const { state, simulatedSeconds } = advanceTo(createInitialState(1000), 122_000);
     expect(simulatedSeconds).toBe(121);
-    expect(state.totalLaps).toBe(2);
-    expect(state.xp.toNumber()).toBe(2);
-    expect(state.lapProgressM).toBeCloseTo(0.5, 9);
+    expect(state.totalLaps).toBe(12);
+    expect(state.xp.toNumber()).toBe(12);
+    expect(state.lapProgressM).toBeCloseTo(1, 9);
     expect(state.lastTickAt).toBe(122_000);
   });
 
   it('caps offline catch-up at eight hours', () => {
     const dayLater = 24 * 60 * 60 * 1000;
-    const { state, simulatedSeconds } = advanceTo(withLevels({ autoPedal: 1 }, 0), dayLater);
+    const { state, simulatedSeconds } = advanceTo(createInitialState(0), dayLater);
     expect(simulatedSeconds).toBe(MAX_CATCH_UP_SECONDS);
-    // 8 h at 0.5 m/s = 14400 m = 480 laps of 30 m, and a lap pays 1 XP with
+    // 8 h at 1 m/s = 28800 m = 2880 laps of 10 m, and a lap pays 1 XP with
     // nothing bought to multiply it.
-    expect(state.totalLaps).toBe(480);
-    expect(state.xp.toNumber()).toBe(480);
-    // Money has no earner until races: riding must never produce any.
+    expect(state.totalLaps).toBe(2880);
+    expect(state.xp.toNumber()).toBe(2880);
+    // Money has no earner until races: driving must never produce any.
     expect(state.money.toNumber()).toBe(0);
     expect(state.lastTickAt).toBe(dayLater);
   });
 
   it('never simulates backwards', () => {
-    const { state, simulatedSeconds } = advanceTo(withLevels({ autoPedal: 1 }, 5000), 1000);
+    const { state, simulatedSeconds } = advanceTo(withLevels({ throttle: 1 }, 5000), 1000);
     expect(simulatedSeconds).toBe(0);
     expect(state.xp.toNumber()).toBe(0);
     expect(state.totalLaps).toBe(0);

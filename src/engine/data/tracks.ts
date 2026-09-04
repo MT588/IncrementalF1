@@ -8,10 +8,13 @@ export const TRACKS: readonly TrackDef[] = [
     id: 'backyard',
     name: 'Backyard loop',
     description: 'Once around the garden, past the shed and back.',
-    lapDistanceM: 30,
+    // Ten metres, so the kart is round it in ten seconds at its starting speed:
+    // the first lap, and with it the first upgrade, lands before the player has
+    // time to wonder what the game wants from them.
+    lapDistanceM: 10,
     // A lap of the backyard is worth exactly 1 XP: the smallest interesting
     // number, so every price in the shed reads as a count of laps.
-    xpPerMetre: 1 / 30,
+    xpPerMetre: 1 / 10,
   },
 ];
 

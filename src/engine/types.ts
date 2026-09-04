@@ -17,14 +17,12 @@ export interface GameState {
    * UI shows it, so it is always zero for now.
    */
   money: Decimal;
-  /** The track currently being ridden. */
+  /** The track currently being driven. */
   trackId: TrackId;
   /** Metres into the current lap: 0 <= lapProgressM < track.lapDistanceM. */
   lapProgressM: number;
   /** Completed laps, lifetime. */
   totalLaps: number;
-  /** Metres covered by the player's own clicks, lifetime. */
-  totalClicksM: number;
   /** Owned level per upgrade. 0 means not bought. */
   upgrades: Record<UpgradeId, number>;
   /** ms since epoch of the last simulated instant. Drives offline catch-up. */
@@ -53,16 +51,12 @@ export interface TrackDef {
 
 /** What one level of an upgrade does. Add a kind here and handle it in formulas.ts. */
 export type UpgradeEffect =
-  /** Adds metres per second of automatic pedalling. */
+  /** Adds metres per second to the kart's speed. */
   | { kind: 'speed'; perLevel: number }
   /** Multiplies the XP earned per completed lap. */
   | { kind: 'xpMult'; perLevel: number }
-  /** Adds metres to every click, the player's own or the training partner's. */
-  | { kind: 'clickMetres'; perLevel: number }
-  /** Multiplies the total automatic speed, however that speed was earned. */
-  | { kind: 'speedMult'; perLevel: number }
-  /** Adds automatic clicks per second, each worth a full metresPerClick. */
-  | { kind: 'autoClicks'; perLevel: number };
+  /** Multiplies the whole speed, however that speed was earned. */
+  | { kind: 'speedMult'; perLevel: number };
 
 export interface UpgradeDef {
   id: UpgradeId;
@@ -74,8 +68,8 @@ export interface UpgradeDef {
   growth: number;
   /**
    * Completed laps needed before this appears in the shed at all. 0 means it is
-   * there from the first ride. Gating on laps rather than XP keeps the reveal
-   * tied to something the player did, not to a balance they happen to hold.
+   * there from the first lap. Gating on laps rather than XP keeps the reveal
+   * tied to something that happened on track, not to a balance they happen to hold.
    */
   unlockAtLaps: number;
   effect: UpgradeEffect;

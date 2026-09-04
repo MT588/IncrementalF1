@@ -68,17 +68,33 @@ const v4Save = {
   },
 };
 
+/** A save as M1.6.7 wrote them: the last of the bicycle, with all five upgrades. */
+const v5Save = {
+  version: 5,
+  savedAt: 555,
+  state: {
+    xp: '20',
+    money: '0',
+    trackId: 'backyard',
+    lapProgressM: 12,
+    totalLaps: 20,
+    totalClicksM: 300,
+    upgrades: { biggerGears: 4, autoPedal: 3, betterBike: 1, slipstream: 2, trainingPartner: 5 },
+    lastTickAt: 456,
+    createdAt: 123,
+  },
+};
+
 describe('save round trip', () => {
   it('preserves state including large Decimal XP', () => {
     const initial = createInitialState(123);
     const state = {
       ...initial,
       xp: new Decimal('1.5e400'),
-      lapProgressM: 12.5,
+      lapProgressM: 2.5,
       totalLaps: 42,
-      totalClicksM: 900,
       // Spread the initial levels so adding an upgrade does not break this fixture.
-      upgrades: { ...initial.upgrades, autoPedal: 3, betterBike: 2, slipstream: 1 },
+      upgrades: { ...initial.upgrades, throttle: 3, racingTyres: 2, slipstream: 1 },
       lastTickAt: 456,
     };
     const back = deserialize(serialize(state, 789));
@@ -86,11 +102,10 @@ describe('save round trip', () => {
     expect(back!.xp.eq(state.xp)).toBe(true);
     expect(back!.money.toNumber()).toBe(0);
     expect(back!.trackId).toBe('backyard');
-    expect(back!.lapProgressM).toBe(12.5);
+    expect(back!.lapProgressM).toBe(2.5);
     expect(back!.totalLaps).toBe(42);
-    expect(back!.totalClicksM).toBe(900);
-    expect(back!.upgrades.autoPedal).toBe(3);
-    expect(back!.upgrades.betterBike).toBe(2);
+    expect(back!.upgrades.throttle).toBe(3);
+    expect(back!.upgrades.racingTyres).toBe(2);
     expect(back!.upgrades.slipstream).toBe(1);
     expect(back!.lastTickAt).toBe(456);
     expect(back!.createdAt).toBe(123);
@@ -98,7 +113,7 @@ describe('save round trip', () => {
 
   it('writes the current version and timestamp', () => {
     const save = toSave(createInitialState(0), 999);
-    expect(save.version).toBe(5);
+    expect(save.version).toBe(6);
     expect(save.savedAt).toBe(999);
     expect(save.state.xp).toBe('0');
     expect(save.state.money).toBe('0');
@@ -107,7 +122,7 @@ describe('save round trip', () => {
   it('defaults missing upgrades to zero', () => {
     const save = base();
     save.state.upgrades = {};
-    expect(fromSave(save)?.upgrades.autoPedal).toBe(0);
+    expect(fromSave(save)?.upgrades.throttle).toBe(0);
   });
 
   it('tolerates a missing money field, which has no earner yet', () => {
@@ -118,7 +133,7 @@ describe('save round trip', () => {
     expect(back!.money.toNumber()).toBe(0);
   });
 
-  it('never leaves the bike parked past the finish line', () => {
+  it('never leaves the kart parked past the finish line', () => {
     const save = base();
     save.state.lapProgressM = 95;
     expect(fromSave(save)?.lapProgressM).toBeCloseTo(5, 9);
@@ -133,12 +148,12 @@ describe('migration', () => {
     // buying power, whatever the scale in between.
     expect(back!.xp.toNumber()).toBe(20);
     expect(back!.money.toNumber()).toBe(0);
-    // Everything else rides along untouched.
+    // Everything else rides along untouched, bar the lap the kart is part-way
+    // round: 12 m into a lap that is now only 10 m long is 2 m into the next.
     expect(back!.totalLaps).toBe(20);
-    expect(back!.totalClicksM).toBe(300);
-    expect(back!.lapProgressM).toBe(12);
-    expect(back!.upgrades.autoPedal).toBe(3);
-    expect(back!.upgrades.betterBike).toBe(1);
+    expect(back!.lapProgressM).toBeCloseTo(2, 9);
+    expect(back!.upgrades.throttle).toBe(3);
+    expect(back!.upgrades.racingTyres).toBe(1);
     expect(back!.upgrades.slipstream).toBe(0);
   });
 
@@ -148,16 +163,41 @@ describe('migration', () => {
     // 600 XP at 30 a lap was 20 laps of buying power; so is 20 XP at 1 a lap.
     expect(back!.xp.toNumber()).toBe(20);
     expect(back!.totalLaps).toBe(20);
-    expect(back!.upgrades.autoPedal).toBe(3);
+    expect(back!.upgrades.throttle).toBe(3);
   });
 
-  it('renames a v4 tap counter into clicks', () => {
+  it('carries a v4 save through the tap rename and out the far side', () => {
     const back = fromSave(v4Save);
     expect(back).not.toBeNull();
-    expect(back!.totalClicksM).toBe(300);
     expect(back!.xp.toNumber()).toBe(20);
-    // A v4 save missing the counter is refused rather than started at zero.
-    expect(fromSave({ ...v4Save, state: { ...v4Save.state, totalTapsM: undefined } })).toBeNull();
+    expect(back!.upgrades.throttle).toBe(3);
+    // The tap counter it was renamed into no longer exists in the state at all,
+    // so a v4 save without one is now perfectly loadable.
+    const noCounter = fromSave({ ...v4Save, state: { ...v4Save.state, totalTapsM: undefined } });
+    expect(noCounter).not.toBeNull();
+    expect(noCounter!.totalLaps).toBe(20);
+  });
+
+  it('maps the bicycle upgrades onto the kart, and drops the rest', () => {
+    const back = fromSave(v5Save);
+    expect(back).not.toBeNull();
+    // Auto-pedal and the throttle are both +0.5 m/s, so the level carries over.
+    expect(back!.upgrades.throttle).toBe(3);
+    expect(back!.upgrades.racingTyres).toBe(1);
+    expect(back!.upgrades.slipstream).toBe(2);
+    // Bigger gears and the training partner made a click worth more; nothing
+    // clicks any more, so they have nothing to become.
+    expect(back!.upgrades.biggerEngine).toBe(0);
+    expect(Object.keys(back!.upgrades).sort()).toEqual([
+      'biggerEngine',
+      'racingTyres',
+      'slipstream',
+      'throttle',
+    ]);
+    // The balance and the laps are untouched by the move.
+    expect(back!.xp.toNumber()).toBe(20);
+    expect(back!.totalLaps).toBe(20);
+    expect(back!.lapProgressM).toBeCloseTo(2, 9);
   });
 
   it('carries money and laps from a v1 save through every step', () => {
@@ -171,8 +211,8 @@ describe('migration', () => {
     expect(back!.lastTickAt).toBe(456);
     expect(back!.trackId).toBe('backyard');
     expect(back!.lapProgressM).toBe(0);
-    expect(back!.upgrades.autoPedal).toBe(0);
-    expect(back!.upgrades.betterBike).toBe(0);
+    expect(back!.upgrades.throttle).toBe(0);
+    expect(back!.upgrades.racingTyres).toBe(0);
   });
 
   it('refuses a broken older save without throwing', () => {
@@ -202,7 +242,7 @@ describe('rejects bad saves', () => {
     ['NaN money', JSON.stringify({ ...base(), state: { ...base().state, money: 'abc' } })],
     [
       'fractional upgrade level',
-      JSON.stringify({ ...base(), state: { ...base().state, upgrades: { autoPedal: 1.5 } } }),
+      JSON.stringify({ ...base(), state: { ...base().state, upgrades: { throttle: 1.5 } } }),
     ],
     [
       'negative lap progress',

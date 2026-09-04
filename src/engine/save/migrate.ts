@@ -1,7 +1,7 @@
 import { STARTING_TRACK_ID } from '../data/tracks';
 import { parseAmount } from './amount';
 
-export const LATEST_SAVE_VERSION = 5;
+export const LATEST_SAVE_VERSION = 6;
 
 type RawSave = Record<string, unknown>;
 /** Returns the save one version newer, or null when it is too broken to convert. */
@@ -77,7 +77,10 @@ const migrateV3toV4: Migration = (raw) => {
 /**
  * v4 called the manual action a tap; v5 calls it a click, and the lifetime
  * counter of self-pedalled metres was renamed with it. Nothing but the name
- * changes, so an absent old field is left absent for `fromSave` to refuse.
+ * changes, so an absent old field is left absent.
+ *
+ * That used to make `fromSave` refuse such a save. It no longer does: v6 drops
+ * the counter altogether, so there is nothing left to be missing.
  */
 const migrateV4toV5: Migration = (raw) => {
   if (!isRecord(raw.state)) return null;
@@ -85,11 +88,43 @@ const migrateV4toV5: Migration = (raw) => {
   return { ...raw, version: 5, state: { ...rest, totalClicksM: totalTapsM } };
 };
 
+/** Old id to new, for the upgrades that survived the move to a kart. */
+const RENAMED_UPGRADES: readonly (readonly [string, string])[] = [
+  ['autoPedal', 'throttle'],
+  ['betterBike', 'racingTyres'],
+  ['slipstream', 'slipstream'],
+];
+
+/**
+ * v5 was the last of the bicycle: clicks for distance, five upgrades built round
+ * them. v6 is a kart that drives itself, so the click is gone along with the two
+ * upgrades that existed to make one worth pressing.
+ *
+ * Levels carry across one for one wherever the new ladder has an equivalent —
+ * auto-pedal and the throttle are both +0.5 m/s, the tyres are the same
+ * multiplier under a new id, and slipstream never changed. Bigger gears and the
+ * training partner have nothing to convert into and are dropped, as v1's
+ * mechanics were. `totalClicksM` goes with them: nothing clicks any more.
+ */
+const migrateV5toV6: Migration = (raw) => {
+  if (!isRecord(raw.state)) return null;
+  const owned = isRecord(raw.state.upgrades) ? raw.state.upgrades : {};
+  const upgrades: RawSave = {};
+  for (const [was, now] of RENAMED_UPGRADES) {
+    if (owned[was] !== undefined) upgrades[now] = owned[was];
+  }
+  const state: RawSave = { ...raw.state, upgrades };
+  // Nothing clicks any more, so the lifetime counter of clicked metres goes.
+  delete state.totalClicksM;
+  return { ...raw, version: 6, state };
+};
+
 const MIGRATIONS: Record<number, Migration> = {
   1: migrateV1toV2,
   2: migrateV2toV3,
   3: migrateV3toV4,
   4: migrateV4toV5,
+  5: migrateV5toV6,
 };
 
 /**

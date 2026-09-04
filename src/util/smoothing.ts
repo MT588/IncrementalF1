@@ -22,7 +22,7 @@ export interface Glide {
  * The value only ever moves forward at the eased rate; anything else jumps.
  * A target behind `current` means the simulation was reset or reloaded, and a
  * target further ahead than `snapAt` means the tab was away and caught up —
- * riding either of those out would send the bike backwards or round the yard
+ * easing either of those out would send the kart backwards or round the yard
  * for minutes on end.
  */
 export function approach(current: number, target: number, dtSeconds: number, glide: Glide): number {

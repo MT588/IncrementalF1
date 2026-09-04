@@ -8,8 +8,8 @@ import { LATEST_SAVE_VERSION, migrate } from './migrate';
 
 export const SAVE_VERSION = LATEST_SAVE_VERSION;
 
-export interface SaveFileV5 {
-  version: 5;
+export interface SaveFileV6 {
+  version: 6;
   savedAt: number;
   state: {
     xp: string;
@@ -17,17 +17,16 @@ export interface SaveFileV5 {
     trackId: string;
     lapProgressM: number;
     totalLaps: number;
-    totalClicksM: number;
     upgrades: Partial<Record<UpgradeId, number>>;
     lastTickAt: number;
     createdAt: number;
   };
 }
 
-export function toSave(state: GameState, savedAt: number): SaveFileV5 {
+export function toSave(state: GameState, savedAt: number): SaveFileV6 {
   return {
     // Keep in step with LATEST_SAVE_VERSION and the interface above.
-    version: 5,
+    version: 6,
     savedAt,
     state: {
       xp: state.xp.toString(),
@@ -35,7 +34,6 @@ export function toSave(state: GameState, savedAt: number): SaveFileV5 {
       trackId: state.trackId,
       lapProgressM: state.lapProgressM,
       totalLaps: state.totalLaps,
-      totalClicksM: state.totalClicksM,
       upgrades: { ...state.upgrades },
       lastTickAt: state.lastTickAt,
       createdAt: state.createdAt,
@@ -61,7 +59,7 @@ export function fromSave(raw: unknown): GameState | null {
   if (!isRecord(s)) return null;
   if (!isTrackId(s.trackId)) return null;
   if (!isFiniteNumber(s.lastTickAt) || !isFiniteNumber(s.createdAt)) return null;
-  if (!isCount(s.totalLaps) || !isFiniteNumber(s.totalClicksM) || s.totalClicksM < 0) return null;
+  if (!isCount(s.totalLaps)) return null;
   if (!isFiniteNumber(s.lapProgressM) || s.lapProgressM < 0) return null;
   if (!isRecord(s.upgrades)) return null;
 
@@ -88,10 +86,9 @@ export function fromSave(raw: unknown): GameState | null {
     xp,
     money,
     trackId: s.trackId,
-    // A shorter track (or a hand-edited save) must not leave the bike past the line.
+    // A shorter track (or a hand-edited save) must not leave the kart past the line.
     lapProgressM: s.lapProgressM % getTrack(s.trackId).lapDistanceM,
     totalLaps: s.totalLaps,
-    totalClicksM: s.totalClicksM,
     upgrades,
     lastTickAt: s.lastTickAt,
     createdAt: s.createdAt,

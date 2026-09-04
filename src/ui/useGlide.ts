@@ -5,14 +5,14 @@ import { approach, type Glide } from '@/util/smoothing';
  * A number that chases `target` instead of jumping to it, one step of
  * `approach` per animation frame.
  *
- * The simulation moves the bike in steps — a whole metre when the player
- * clicks, a tick's worth ten times a second while it pedals itself — and a
- * step of one metre is a twelfth of the yard, which reads as a hop. Easing the
- * *drawn* distance keeps the state honest and the motion continuous: the store
- * is still the truth, this is only how the truth is arrived at on screen.
+ * The simulation moves the kart in steps — a tick's worth, ten times a second
+ * — and on a ten-metre lap a step is a visible fraction of the yard, which
+ * reads as a stutter. Easing the *drawn* distance keeps the state honest and
+ * the motion continuous: the store is still the truth, this is only how the
+ * truth is arrived at on screen.
  *
  * `target` must be cumulative rather than a position inside a lap: easing a
- * value that resets at the line would sweep the bike backwards across the yard
+ * value that resets at the line would sweep the kart backwards across the yard
  * on every rollover.
  *
  * Settles exactly on the target and then stops setting state, so an idle
